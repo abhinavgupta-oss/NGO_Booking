@@ -1,0 +1,10 @@
+Owner: C=91,
+      ST=UP, 
+       L=Kanpur,
+       O=Ost, 
+      OU=20,
+      CN=AMRST 
+---------------------
+alias |  NGOBOOKING
+Pass  | NGO@1234
+------------------------
