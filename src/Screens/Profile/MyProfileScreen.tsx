@@ -1,6 +1,8 @@
-// src/screens/MyProfileScreen.tsx
+import React, {
+    useEffect,
+    useCallback,
+} from "react";
 
-import React, { useEffect } from "react";
 import {
     View,
     Text,
@@ -13,11 +15,14 @@ import {
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { useNavigation } from "@react-navigation/native";
-import { DevoteemyProfile } from "../../Services/Devotee/DevoteeServices";
+
 import { logout } from "../../Services/Utils/UtilsService";
 import { removeAuthData } from "../../Stores/AuthStore/AuthStorage";
+
 import { colors } from "../../utility/AppTheam";
+
 import { useProfileStore } from "../../Stores/useProfileStore";
+
 import CustomeLoading from "../../Component/Loading/CustomeLoading";
 
 const profileMenu = [
@@ -60,56 +65,89 @@ const profileMenu = [
 ];
 
 const MyProfileScreen = () => {
+    const navigation: any =
+        useNavigation();
 
-    const navigation: any = useNavigation();
-   const { myProfile, loading, fetchMyprofile } = useProfileStore();
+    const {
+        myProfile,
+        loading,
+        fetchMyprofile,
+    } = useProfileStore();
+
+    const fetchProfileData = useCallback(
+        async () => {
+            try {
+                const resp =
+                    await fetchMyprofile();
+
+                console.log("resp", resp);
+            } catch (error: any) {
+                console.log(
+                    "Profile Error",
+                    error,
+                );
+            }
+        },
+        [fetchMyprofile],
+    );
 
     useEffect(() => {
         fetchProfileData();
-    }, []);
+    }, [fetchProfileData]);
 
-    const fetchProfileData = async () => {
-        try {
-            const resp = await fetchMyprofile();
-            console.log("resp", resp)
-        } catch (error: any) {
-        }
-    }
-
-    console.log("myProfile", myProfile)
+    console.log("myProfile", myProfile);
 
     const handelLogOut = async () => {
         try {
-            const resp = await logout()
-            console.log("resp", resp)
+            const resp = await logout();
+
+            console.log("resp", resp);
+
             if (resp?.status) {
-                await removeAuthData()
-                removeAuthData();
+                await removeAuthData();
+
                 navigation.reset({
                     index: 0,
-                    routes: [{ name: 'Login' }],
-                })
+                    routes: [
+                        {
+                            name: "Login",
+                        },
+                    ],
+                });
             }
-
-        } catch (error: any) {
+        } catch {
 
         }
-    }
+    };
 
-    const renderMenuItem = (item: any) => {
+    const renderMenuItem = (
+        item: any,
+    ) => {
         return (
             <TouchableOpacity
                 key={item.id}
                 style={styles.menuItem}
                 activeOpacity={0.8}
                 onPress={() =>
-                    navigation.navigate(item.screen,{userId:myProfile?.id})
+                    navigation.navigate(
+                        item.screen,
+                        {
+                            userId:
+                                myProfile?.id,
+                        },
+                    )
                 }
             >
-
-                <View style={styles.leftContainer}>
-
-                    <View style={styles.iconContainer}>
+                <View
+                    style={
+                        styles.leftContainer
+                    }
+                >
+                    <View
+                        style={
+                            styles.iconContainer
+                        }
+                    >
                         <MaterialIcons
                             name={item.icon}
                             size={22}
@@ -117,10 +155,13 @@ const MyProfileScreen = () => {
                         />
                     </View>
 
-                    <Text style={styles.menuTitle}>
+                    <Text
+                        style={
+                            styles.menuTitle
+                        }
+                    >
                         {item.title}
                     </Text>
-
                 </View>
 
                 <MaterialIcons
@@ -128,14 +169,12 @@ const MyProfileScreen = () => {
                     size={24}
                     color="#999"
                 />
-
             </TouchableOpacity>
         );
     };
 
     return (
         <View style={styles.container}>
-
             <StatusBar
                 backgroundColor="#F8F8F8"
                 barStyle="dark-content"
@@ -145,76 +184,111 @@ const MyProfileScreen = () => {
                 contentContainerStyle={
                     styles.scrollContainer
                 }
-                showsVerticalScrollIndicator={false}
+                showsVerticalScrollIndicator={
+                    false
+                }
             >
-
                 {/* PROFILE CARD */}
 
-                <View style={styles.profileCard}>
-
+                <View
+                    style={styles.profileCard}
+                >
                     {/* TOP PROFILE */}
 
-                    <View style={styles.profileHeader}>
-
+                    <View
+                        style={
+                            styles.profileHeader
+                        }
+                    >
                         <Image
-                            source={myProfile?.profilePicUrl ? {
-                                uri: myProfile?.profilePicUrl,
-                            } : {
-                                uri: myProfile?.branchLogo,
-                            }}
-                            style={styles.profileImage}
+                            source={
+                                myProfile?.profilePicUrl
+                                    ? {
+                                          uri: myProfile?.profilePicUrl,
+                                      }
+                                    : {
+                                          uri: myProfile?.branchLogo,
+                                      }
+                            }
+                            style={
+                                styles.profileImage
+                            }
                         />
 
-                        <View style={styles.profileInfo}>
-
-                            <Text style={styles.userName}>
-                                {myProfile?.fullName}
+                        <View
+                            style={
+                                styles.profileInfo
+                            }
+                        >
+                            <Text
+                                style={
+                                    styles.userName
+                                }
+                            >
+                                {
+                                    myProfile?.fullName
+                                }
                             </Text>
 
-                            <Text style={styles.mobile}>
-                                +91 - {myProfile?.mobile}
-
+                            <Text
+                                style={
+                                    styles.mobile
+                                }
+                            >
+                                +91 -{" "}
+                                {
+                                    myProfile?.mobile
+                                }
                             </Text>
 
                             <TouchableOpacity>
-                                <Text style={styles.editText}>
+                                <Text
+                                    style={
+                                        styles.editText
+                                    }
+                                >
                                     Edit Profile
                                 </Text>
                             </TouchableOpacity>
-
                         </View>
-
                     </View>
 
                     {/* MENU LIST */}
 
-                    <View style={styles.menuContainer}>
-                        {profileMenu.map(renderMenuItem)}
+                    <View
+                        style={
+                            styles.menuContainer
+                        }
+                    >
+                        {profileMenu.map(
+                            renderMenuItem,
+                        )}
                     </View>
 
                     {/* LOGOUT */}
 
                     <TouchableOpacity
-                        style={styles.logoutButton}
-                        onPress={handelLogOut}
+                        style={
+                            styles.logoutButton
+                        }
+                        onPress={
+                            handelLogOut
+                        }
                     >
-
-                        {/* <Feather
-                            name="log-out"
-                            size={22}
-                            color="#FF5B5B"
-                        /> */}
-
-                        <Text style={styles.logoutText}>
+                        <Text
+                            style={
+                                styles.logoutText
+                            }
+                        >
                             Logout
                         </Text>
-
                     </TouchableOpacity>
-
                 </View>
-
             </ScrollView>
-            <CustomeLoading isLoading={loading} />  
+
+            <CustomeLoading
+                isLoading={loading}
+            />
         </View>
     );
 };
@@ -222,7 +296,6 @@ const MyProfileScreen = () => {
 export default MyProfileScreen;
 
 const styles = StyleSheet.create({
-
     container: {
         flex: 1,
         backgroundColor: "#F8F8F8",
@@ -292,11 +365,13 @@ const styles = StyleSheet.create({
     menuItem: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
+        justifyContent:
+            "space-between",
         paddingVertical: 18,
         paddingHorizontal: 16,
         borderBottomWidth: 1,
-        borderBottomColor: "#F1F1F1",
+        borderBottomColor:
+            "#F1F1F1",
     },
 
     leftContainer: {
