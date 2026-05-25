@@ -150,7 +150,7 @@ const RoomDetailsScreen = () => {
 
                     <Text style={styles.roomPrice}>
                         {room?.price || 1200}
-                        <Text style={styles.nightText}></Text>
+                        <Text style={styles.nightText} />
                     </Text>
 
                 </View>
