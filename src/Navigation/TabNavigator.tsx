@@ -10,27 +10,25 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 
 import DashboardScreen from "../Screens/Dashboard/DashboardScreen";
-import EventListScreens from "../Screens/Events/EventListScreens";
 import DonationListScreen from "../Screens/Donations/DonationListScreen";
 import MyProfileScreen from "../Screens/Profile/MyProfileScreen";
-import MyBookingScreen from "../Screens/Profile/myInfoDetails/MyBookingScreen";
 import RoomAvailableScreen from "../Screens/Rooms/RoomAvailableScreen";
 
 const Tab = createBottomTabNavigator();
 
-function AddButton({ children, onPress }: any) {
-    return (
-        <TouchableOpacity
-            style={styles.addButtonContainer}
-            activeOpacity={1}
-            onPress={onPress}
-        >
-            <View style={styles.addButton}>
-                {children}
-            </View>
-        </TouchableOpacity>
-    );
-}
+// function AddButton({ children, onPress }: any) {
+//     return (
+//         <TouchableOpacity
+//             style={styles.addButtonContainer}
+//             activeOpacity={1}
+//             onPress={onPress}
+//         >
+//             <View style={styles.addButton}>
+//                 {children}
+//             </View>
+//         </TouchableOpacity>
+//     );
+// }
 
 export default function TabNavigator() {
     return (

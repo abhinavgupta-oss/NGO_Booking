@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
     View,
     Text,
@@ -80,8 +80,6 @@ const DashboardScreen = () => {
             title: "Dinner Prasadam",
         },
     ];
-
-    // const [EventList, setEventList] = useState<any[]>([]);
     const { myProfile, loading, fetchMyprofile } = useProfileStore();
     const { eventList, loading: eventLoading, fetchEventList } = useEventStore();
 

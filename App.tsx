@@ -1,4 +1,4 @@
-import React, {useState } from "react";
+import React from "react";
 import { ToastProvider } from "./src/Component/Toast/ToastContext";
 import AppNavigator from "./src/Navigation/AppNavigator";
 import NoInternetScreen from "./src/Component/NoInternet/NoInternetScreen";

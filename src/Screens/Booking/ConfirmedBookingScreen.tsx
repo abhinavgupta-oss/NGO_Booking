@@ -1,10 +1,7 @@
-import {
-    ScrollView, StatusBar, TextInput,
-    Image, StyleSheet, Text, TouchableOpacity, View
+import {StatusBar, Image, StyleSheet, Text, TouchableOpacity, View
 } from "react-native";
 import { colors } from "../../utility/AppTheam";
 import {
-    useRoute,
     useNavigation
 } from "@react-navigation/native";
 import { Images } from "../../utility/utility";

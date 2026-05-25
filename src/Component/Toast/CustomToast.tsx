@@ -7,7 +7,7 @@ import {
     Dimensions,
     Image,
 } from 'react-native';
-import { Icons, icons } from '../../utility/utility';
+import { Icons} from '../../utility/utility';
 
 const { width } = Dimensions.get('window');
 
