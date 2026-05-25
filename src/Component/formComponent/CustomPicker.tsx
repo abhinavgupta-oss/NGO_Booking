@@ -64,6 +64,8 @@ const CustomPicker = ({
     onClose();
   };
 
+  console.log("CustomPicker Rendered",selectedText);
+
   return (
     <Modal
       visible={visible}
