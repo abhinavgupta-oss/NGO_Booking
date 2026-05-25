@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
     View,
     StyleSheet,
@@ -6,23 +6,12 @@ import {
     ImageBackground,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useToast } from '../../Component/Toast/ToastContext';
-import LinearGradient from 'react-native-linear-gradient';
 import { getAccessToken, isUserLoggedIn } from '../../Stores/AuthStore/AuthStorage';
-import { DevoteemyProfile } from '../../Services/Devotee/DevoteeServices';
 import { Images } from '../../utility/utility';
 import { colors } from '../../utility/AppTheam';
 
-interface BuildType {
-    VersionCode?: string;
-}
-
 const SplashScreen = () => {
     const navigation = useNavigation<any>();
-    const { showToast } = useToast();
-
-    const [build, setBuild] = useState<BuildType | null>(null);
-    const [deviceBuild, setDeviceBuild] = useState('');
 
     useEffect(() => {
         const checkLogin = async () => {
@@ -46,7 +35,7 @@ const SplashScreen = () => {
         };
 
         checkLogin();
-    }, []);
+    }, [navigation]);
 
 
     return (

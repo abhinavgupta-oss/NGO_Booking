@@ -31,7 +31,7 @@ const DonationDetails = ({ route, navigation }) => {
 
             const resp = await DonationPayment(data);
 
-            if (resp?.status) { 
+            if (resp?.status) {
                 setShowDonationModal(false)
                 const URL = resp?.result
                 console.log("URL", URL)
@@ -39,20 +39,19 @@ const DonationDetails = ({ route, navigation }) => {
                 setShowPaymentModal(true)
             }
         } catch (error: any) {
-
-        }finally{
+            console.log("Donation submit error", error);
+        } finally {
             setLoading(false);
         }
-
     };
 
-    const handelDonationUpdate = async(data:any)=>{
-        try{
-
-        }catch(error:any){
-
+    const handelDonationUpdate = async () => {
+        try {
+            console.log("Donation update called");
+        } catch (error: any) {
+            console.log("Donation update error", error);
         }
-    }
+    };
 
     return (
         <View style={styles.container}>

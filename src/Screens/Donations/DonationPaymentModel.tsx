@@ -25,7 +25,7 @@ const DonationPaymentModel = ({
 }: Props) => {
     const { showToast } = useToast();
     const navigation = useNavigation();
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const paymentHandled = useRef(false);
 
     const PayUrl = Details?.paymentUrl
@@ -73,7 +73,8 @@ const DonationPaymentModel = ({
                 if (updateDetails?.status) {
                     showToast(updateDetails?.message, "success")
                     const Resp = updateDetails?.result
-                    navigation.replace("DonationPenDetails",{paymentId:Resp?.paymentId,token:Details?.token})
+                    onSubmit(updateDetails?.result);
+                    navigation.replace("DonationPenDetails", { paymentId: Resp?.paymentId, token: Details?.token })
                     onClose()
                 }
                 console.log("updateDetails", updateDetails)

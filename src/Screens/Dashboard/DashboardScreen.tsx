@@ -82,6 +82,24 @@ const DashboardScreen = () => {
     const { myProfile, loading, fetchMyprofile } = useProfileStore();
     const { eventList, fetchEventList } = useEventStore();
 
+    const fetchData = useCallback(async () => {
+        try {
+            const resp = await fetchMyprofile();
+            console.log("resp", resp)
+
+            const eventPayload = {
+                "eventFilterTypeId": 3,
+                "pageNumber": 1,
+                "pageSize": 3,
+            }
+
+            const respList = await fetchEventList(eventPayload);
+            console.log("respList", respList)
+        } catch (error) {
+            console.log("error", error);
+        }
+    }, [fetchMyprofile, fetchEventList]);
+
     useFocusEffect(
         useCallback(() => {
             fetchData()
@@ -109,26 +127,8 @@ const DashboardScreen = () => {
             );
 
             return () => backHandler.remove();
-        }, [])
+        }, [fetchData])
     );
-
-    const fetchData = async () => {
-        try {
-            const resp = await fetchMyprofile();
-            console.log("resp", resp)
-
-            const eventPayload = {
-                "eventFilterTypeId": 3,
-                "pageNumber": 1,
-                "pageSize": 3,
-            }
-
-            const respList = await fetchEventList(eventPayload);
-            console.log("respList", respList)
-        } catch (error) {
-            console.log("error", error);
-        }
-    };
 
 
     const handelNavigate = async (id: any) => {

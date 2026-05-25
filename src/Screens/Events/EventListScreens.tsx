@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -38,11 +38,7 @@ const EventListScreens = () => {
     // 1 = Upcoming | 3 = Past
     const [selectedType, setSelectedType] = useState<1 | 3>(3);
 
-    useEffect(() => {
-        EventList(selectedType); 
-    }, [selectedType]);
-
-    const EventList = async (typeId: number) => {
+    const EventList = useCallback(async (typeId: number) => {
         try {
 
             const eventPayload = {
@@ -57,7 +53,11 @@ const EventListScreens = () => {
         } catch (error) {
             console.log("Event List Error:", error);
         }
-    };
+    }, [fetchEventList]);
+
+    useEffect(() => {
+        EventList(selectedType);
+    }, [selectedType, EventList]);
 
     const renderItem = ({ item }: { item: EventItem }) => {
         return (

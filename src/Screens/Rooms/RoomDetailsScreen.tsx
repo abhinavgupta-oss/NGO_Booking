@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Text, View, Image, StyleSheet, StatusBar, TouchableOpacity, ScrollView, FlatList } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
@@ -19,11 +19,15 @@ const RoomDetailsScreen = () => {
     const flatListRef = useRef(null);
     const [activeIndex, setActiveIndex] = useState(0);
 
-    const roomImages = room?.images || [
-        "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945",
-        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267",
-    ];
+    const roomImages = useMemo(
+        () =>
+            room?.images || [
+                "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945",
+                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267",
+            ],
+        [room]
+    );
 
     const amenities = room?.amenities || [
         "AC",
@@ -50,7 +54,7 @@ const RoomDetailsScreen = () => {
         }, 3000); // 3 sec
 
         return () => clearInterval(interval);
-    }, [activeIndex]);
+    }, [activeIndex, roomImages.length]);
 
     return (
 

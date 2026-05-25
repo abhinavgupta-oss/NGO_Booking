@@ -27,23 +27,23 @@ const MyDonationScreen = ({ route }) => {
     const { userId } = route.params || "";
 
     useEffect(() => {
-        fetchDonationData();
-    }, []);
+        const fetchDonationData = async () => {
+            try {
+                const FormDonation = {
+                    "eUserId": userId,
+                }
 
-    const fetchDonationData = async () => {
-        try {
-            const FormDonation = {
-                "eUserId": userId,
+                const respDonation = await DevoteemyDonation(FormDonation)
+                setDonationList(respDonation?.result)
+                console.log("respDonation", respDonation)
+
+            } catch (error: any) {
+                console.log("Donation Error", error);
             }
+        };
 
-            const respDonation = await DevoteemyDonation(FormDonation)
-            setDonationList(respDonation?.result)
-            console.log("respDonation", respDonation)
-
-        } catch (error: any) {
-            console.log("Donation Error", error);
-        }
-    }
+        fetchDonationData();
+    }, [userId]);
 
     const handelInvoice = async(url:any)=> {
     try {
