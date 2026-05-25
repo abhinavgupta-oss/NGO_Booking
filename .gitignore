@@ -3,7 +3,7 @@ build/
 dist/
 tmp/
 # android
-__tests__
+# __tests__
 .bundle
 .vscode
 # package-lock.json
