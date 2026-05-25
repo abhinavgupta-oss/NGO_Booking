@@ -90,3 +90,68 @@ jobs:
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
+
+  appium:
+    name: Appium Android smoke test
+    runs-on: macos-latest
+    needs: cd
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ngo-booking-debug-apk
+          path: appium-artifacts
+
+      - name: Install Appium Android driver
+        run: npx appium driver install --source=npm appium-uiautomator2-driver
+
+      - name: Run Appium smoke test
+        uses: reactivecircus/android-emulator-runner@v2.37.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: arm64-v8a
+          profile: pixel_6
+          script: |
+            npx appium --base-path /wd/hub --log appium.log &
+            APPIUM_PID=$!
+
+            for i in {1..30}; do
+              if curl --silent --fail http://127.0.0.1:4723/wd/hub/status >/dev/null; then
+                break
+              fi
+              sleep 2
+            done
+
+            APPIUM_APK_PATH="$(find appium-artifacts -name '*.apk' -print -quit)" npm run test:appium
+            kill "$APPIUM_PID"
+
+      - name: Upload Appium log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: appium-log
+          path: appium.log
+          if-no-files-found: ignore
+          retention-days: 7
