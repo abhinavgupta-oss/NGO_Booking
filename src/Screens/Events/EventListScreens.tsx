@@ -5,15 +5,12 @@ import {
     StyleSheet,
     FlatList,
     TouchableOpacity,
-    ActivityIndicator,
     Image,
     StatusBar,
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
-
-import { EventListFilter } from "../../Services/Event/EventService";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icons } from "../../utility/utility";
 import { useNavigation } from "@react-navigation/native";
