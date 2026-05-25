@@ -123,8 +123,8 @@ jobs:
           name: ngo-booking-debug-apk
           path: appium-artifacts
 
-      - name: Install Appium Android driver
-        run: npx appium driver install --source=npm appium-uiautomator2-driver
+      - name: Verify Appium Android driver
+        run: npx appium driver list --installed | grep uiautomator2
 
       - name: Run Appium smoke test
         uses: reactivecircus/android-emulator-runner@v2.37.0
