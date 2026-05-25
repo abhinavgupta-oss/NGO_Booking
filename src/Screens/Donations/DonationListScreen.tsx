@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import {
     View,
     Text,
@@ -32,48 +32,65 @@ interface EventItem {
     endTimeHr: string;
     venue: string;
     eventTypeName: string;
+    statusName?: string;
 }
 
 const DonationListScreen = () => {
     const navigation: any = useNavigation();
 
-    const { donationList, loading, fetchDonationList } = useDonationStore();
+    const {
+        donationList,
+        loading,
+        fetchDonationList,
+    } = useDonationStore();
+
+    const fetchEventList = useCallback(async () => {
+        try {
+            const sevaDetails = {
+                branchCode: AppEnvironment.BRANCH_CODE,
+                statusId: 2,
+            };
+
+            const respList =
+                await fetchDonationList(sevaDetails);
+
+            console.log("respList", respList);
+        } catch (error) {
+            console.log(
+                "Event List Error:",
+                error,
+            );
+        }
+    }, [fetchDonationList]);
 
     useEffect(() => {
         fetchEventList();
-    }, []);
+    }, [fetchEventList]);
 
-    const fetchEventList = async () => {
-        try {
-            const sevaDetails = { branchCode: AppEnvironment.BRANCH_CODE, statusId: 2 }
-
-            const respList = await fetchDonationList(sevaDetails);
-            console.log("respList", respList)
-        } catch (error) {
-            console.log("Event List Error:", error);
-        }
-    };
-
-    const renderItem = ({ item }: { item: EventItem }) => {
+    const renderItem = ({
+        item,
+    }: {
+        item: EventItem;
+    }) => {
         return (
-            <View
-                style={styles.cardWrapper}
-            >
+            <View style={styles.cardWrapper}>
                 <LinearGradient
                     colors={["#FFFFFF", "#FFF7ED"]}
                     style={styles.card}
                 >
-                    {/* EVENT IMAGE */}
-
                     <Image
-                        source={{ uri: item?.bannerURL }}
+                        source={{
+                            uri: item?.bannerURL,
+                        }}
                         style={styles.eventImage}
                         resizeMode="cover"
                     />
 
-                    {/* EVENT DETAILS */}
-
-                    <View style={styles.contentContainer}>
+                    <View
+                        style={
+                            styles.contentContainer
+                        }
+                    >
                         <Text
                             numberOfLines={1}
                             style={styles.title}
@@ -81,24 +98,61 @@ const DonationListScreen = () => {
                             {item.title}
                         </Text>
 
-                        <Text style={{...styles.eventType,color: colors.primary}}>
-                            <Text>{item.statusName}</Text>
+                        <Text
+                            style={{
+                                ...styles.eventType,
+                                color: colors.primary,
+                            }}
+                        >
+                            {item.statusName}
                         </Text>
+
                         {item.endDate && (
                             <>
-                                <Text style={styles.eventType}>
-                                    StartDate: {item.startDate}
+                                <Text
+                                    style={
+                                        styles.eventType
+                                    }
+                                >
+                                    StartDate:{" "}
+                                    {item.startDate}
                                 </Text>
-                                <Text style={styles.eventType}>
-                                    EndDate: {item.endDate}
+
+                                <Text
+                                    style={
+                                        styles.eventType
+                                    }
+                                >
+                                    EndDate:{" "}
+                                    {item.endDate}
                                 </Text>
                             </>
                         )}
-                        <TouchableOpacity style={styles.donateButton} onPress={() => { console.log("hello"); navigation.navigate("DonationDetails", { Details: item }) }}>
-                            <Text style={{ color: "#fff", fontSize: 15, fontWeight: 700 }}>Donate Now</Text>
+
+                        <TouchableOpacity
+                            style={
+                                styles.donateButton
+                            }
+                            onPress={() => {
+                                navigation.navigate(
+                                    "DonationDetails",
+                                    {
+                                        Details: item,
+                                    },
+                                );
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: "#fff",
+                                    fontSize: 15,
+                                    fontWeight: "700",
+                                }}
+                            >
+                                Donate Now
+                            </Text>
                         </TouchableOpacity>
                     </View>
-
                 </LinearGradient>
             </View>
         );
@@ -111,31 +165,44 @@ const DonationListScreen = () => {
                 barStyle="dark-content"
             />
 
-            {/* HEADER */}
             <CommonHeader title="Donations" />
 
-            {/* LOADER */}
             <FlatList
                 data={donationList}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={item =>
+                    item.id.toString()
+                }
                 renderItem={renderItem}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.listContainer}
+                showsVerticalScrollIndicator={
+                    false
+                }
+                contentContainerStyle={
+                    styles.listContainer
+                }
                 ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
+                    <View
+                        style={
+                            styles.emptyContainer
+                        }
+                    >
                         <MaterialIcons
                             name="search"
                             size={70}
                             color="#CCC"
                         />
 
-                        <Text style={styles.emptyText}>
+                        <Text
+                            style={styles.emptyText}
+                        >
                             No Events Found
                         </Text>
                     </View>
                 }
             />
-            <CustomeLoading isLoading={loading} />
+
+            <CustomeLoading
+                isLoading={loading}
+            />
         </SafeAreaView>
     );
 };
@@ -147,41 +214,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#F8F8F8",
     },
-
-    // ================= HEADER =================
-
-    headerRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 18,
-        paddingVertical: 15,
-        backgroundColor: "#FFF",
-        elevation: 2,
-    },
-
-    backButton: {
-        width: 45,
-        height: 45,
-        borderRadius: 22,
-        backgroundColor: "#FFF4EC",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    backIcon: {
-        width: 20,
-        height: 20,
-        resizeMode: "contain",
-    },
-
-    headerText: {
-        fontSize: 20,
-        color: "#111",
-        fontFamily: "Poppins-SemiBold",
-    },
-
-    // ================= LIST =================
 
     listContainer: {
         padding: 16,
@@ -200,16 +232,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
 
-    // ================= IMAGE =================
-
     eventImage: {
         width: 110,
         height: 110,
         borderRadius: 18,
         backgroundColor: "#EEE",
     },
-
-    // ================= CONTENT =================
 
     contentContainer: {
         flex: 1,
@@ -226,39 +254,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontFamily: "Poppins-Medium",
     },
-
-    infoRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 8,
-    },
-
-    infoText: {
-        marginLeft: 8,
-        fontSize: 13,
-        color: "#555",
-        flex: 1,
-        fontFamily: "Poppins-Regular",
-    },
-
-    locationText: {
-        marginLeft: 8,
-        fontSize: 13,
-        color: "#555",
-        flex: 1,
-        lineHeight: 18,
-        fontFamily: "Poppins-Regular",
-    },
-
-    // ================= LOADER =================
-
-    loaderContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    // ================= EMPTY =================
 
     emptyContainer: {
         marginTop: 120,
@@ -278,5 +273,6 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         justifyContent: "center",
         alignItems: "center",
+        marginTop: 10,
     },
 });

@@ -12,8 +12,7 @@ import {
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import CustomInput from "../../Component/formComponent/CustomInput";
-import { DonationPayment } from "../../Services/Donation/DonationService";
-import { useNavigation } from "@react-navigation/native";
+// import { useNavigation } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
 import AppEnvironment from "../../utility/AppEnvironment";
 
@@ -31,7 +30,7 @@ const DonationModal = ({
     onSubmit,
 }: Props) => {
 
-    const navigation: any = useNavigation();
+    // const navigation: any = useNavigation();
 
     const [loading, setLoading] = useState(false);
 

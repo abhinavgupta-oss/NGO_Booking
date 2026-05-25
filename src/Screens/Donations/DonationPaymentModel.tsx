@@ -1,18 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
     View,
-    Text,
     StyleSheet,
-    TouchableOpacity,
     Modal,
-    TextInput,
-    ScrollView,
-    ActivityIndicator,
 } from "react-native";
 
-import MaterialIcons from "@react-native-vector-icons/material-icons";
-import CustomInput from "../../Component/formComponent/CustomInput";
-import { DonationPayment, DonationPaymentVerify } from "../../Services/Donation/DonationService";
+import {DonationPaymentVerify } from "../../Services/Donation/DonationService";
 import { useNavigation } from "@react-navigation/native";
 import WebView from "react-native-webview";
 import { useToast } from "../../Component/Toast/ToastContext";
