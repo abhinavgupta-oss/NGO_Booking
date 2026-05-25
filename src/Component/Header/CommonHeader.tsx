@@ -6,7 +6,6 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    FlatListProperties,
 } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";

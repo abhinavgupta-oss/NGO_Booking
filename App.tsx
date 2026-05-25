@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, {useState } from "react";
 import { ToastProvider } from "./src/Component/Toast/ToastContext";
 import AppNavigator from "./src/Navigation/AppNavigator";
 import NoInternetScreen from "./src/Component/NoInternet/NoInternetScreen";
 
 
 const App = () => {
-  const [isConnected, setIsConnected] = useState<boolean | null>(true);
+  // const [isConnected, setIsConnected] = useState<boolean | null>(true);
+  const isConnected = true;
 
   // useEffect(() => {
   //   const unsubscribe = NetInfo.addEventListener(state => {
