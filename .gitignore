@@ -106,6 +106,7 @@ android/gradle/wrapper/dists
 *.lock
 # testing
 /coverage
+/.jest-cache
 # Fastlane
 fastlane/report.xml
 fastlane/Preview.html

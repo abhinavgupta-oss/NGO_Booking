@@ -14,27 +14,23 @@ const SplashScreen = () => {
     const navigation = useNavigation<any>();
 
     useEffect(() => {
-        const checkLogin = async () => {
+        const timer = setTimeout(async () => {
             try {
-                const timer = setTimeout(async () => {
-                    const isLoggedIn = await isUserLoggedIn();
-                    console.log("isLoggedIn", isLoggedIn)
-                    const getTokenresp = await getAccessToken()
-                    console.log("getTokenresp", getTokenresp)
-                    if (isLoggedIn) {
-                        navigation.replace("Dashboard");
-                    } else {
-                        navigation.replace("Login");
-                    }
-                }, 3000);
-
-                return () => clearTimeout(timer);
+                const isLoggedIn = await isUserLoggedIn();
+                console.log("isLoggedIn", isLoggedIn)
+                const getTokenresp = await getAccessToken()
+                console.log("getTokenresp", getTokenresp)
+                if (isLoggedIn) {
+                    navigation.replace("Dashboard");
+                } else {
+                    navigation.replace("Login");
+                }
             } catch (error) {
                 console.log("Login Check Error:", error);
             }
-        };
+        }, 3000);
 
-        checkLogin();
+        return () => clearTimeout(timer);
     }, [navigation]);
 
 
