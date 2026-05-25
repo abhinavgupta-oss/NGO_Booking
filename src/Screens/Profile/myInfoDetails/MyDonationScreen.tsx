@@ -10,7 +10,6 @@ import {
     StatusBar,
     FlatList,
     Image,
-    Modal,
 } from "react-native";
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
@@ -18,7 +17,6 @@ import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { useNavigation } from "@react-navigation/native";
 import { DevoteemyDonation } from "../../../Services/Devotee/DevoteeServices";
 import { Icons } from "../../../utility/utility";
-import WebView from "react-native-webview";
 import { DevoteeInVoiceDetails } from "../../../Services/Donation/DonationService";
 import { colors } from "../../../utility/AppTheam";
 
@@ -26,8 +24,6 @@ const MyDonationScreen = ({ route }) => {
 
     const navigation = useNavigation();
     const [donationList, setDonationList] = useState([]);
-    const [InvoiceUrl, setInvoiceURL] = useState("");
-    const [InvoiceModel, setInvoiceModel] = useState(false)
     const { userId } = route.params || "";
 
     useEffect(() => {
@@ -45,7 +41,7 @@ const MyDonationScreen = ({ route }) => {
             console.log("respDonation", respDonation)
 
         } catch (error: any) {
-
+            console.log("Donation Error", error);
         }
     }
 
@@ -58,7 +54,7 @@ const MyDonationScreen = ({ route }) => {
         navigation.navigate("DevoteeReceipt", { InvoiceDetails: respInvoice?.result })
 
     } catch (error: any) {
-
+        console.log("Invoice Error", error);
     }
 }
 
