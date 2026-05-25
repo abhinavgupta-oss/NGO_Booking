@@ -7,7 +7,6 @@ import {
     ScrollView,
     StatusBar,
     Image,
-    Pressable,
     BackHandler,
     ToastAndroid,
 } from "react-native";
@@ -81,7 +80,7 @@ const DashboardScreen = () => {
         },
     ];
     const { myProfile, loading, fetchMyprofile } = useProfileStore();
-    const { eventList, loading: eventLoading, fetchEventList } = useEventStore();
+    const { eventList, fetchEventList } = useEventStore();
 
     useFocusEffect(
         useCallback(() => {

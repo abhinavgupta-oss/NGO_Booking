@@ -1,7 +1,5 @@
 import React from "react";
 import {
-    TouchableOpacity,
-    View,
     StyleSheet,
     Pressable,
 } from "react-native";
