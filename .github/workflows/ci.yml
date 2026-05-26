@@ -139,19 +139,7 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
-          script: |
-            npx appium --base-path /wd/hub --log appium.log &
-            APPIUM_PID=$!
-
-            for i in {1..30}; do
-              if curl --silent --fail http://127.0.0.1:4723/wd/hub/status >/dev/null; then
-                break
-              fi
-              sleep 2
-            done
-
-            APPIUM_APK_PATH="$(find appium-artifacts -name '*.apk' -print -quit)" npm run test:appium
-            kill "$APPIUM_PID"
+          script: bash e2e/run-appium-smoke.sh
 
       - name: Upload Appium log
         if: failure()
