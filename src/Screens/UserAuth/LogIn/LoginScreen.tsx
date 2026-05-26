@@ -233,6 +233,8 @@ const LoginScreen = () => {
 
                     <View style={styles.toggleContainer}>
                         <TouchableOpacity
+                            testID="login-mode-otp"
+                            accessibilityLabel="login-mode-otp"
                             style={[
                                 styles.toggleButton,
                                 loginType === "OTP" && styles.activeToggle,
@@ -254,6 +256,8 @@ const LoginScreen = () => {
                         </TouchableOpacity>
 
                         <TouchableOpacity
+                            testID="login-mode-password"
+                            accessibilityLabel="login-mode-password"
                             style={[
                                 styles.toggleButton,
                                 loginType === "PASSWORD" &&
@@ -312,6 +316,8 @@ const LoginScreen = () => {
                                 ? "number-pad"
                                 : "default"
                         }
+                        testID="login-user-id-input"
+                        accessibilityLabel="login-user-id-input"
                         onChangeText={(text) => {
                             setUserID(text);
                             setEmailError("");
@@ -332,6 +338,8 @@ const LoginScreen = () => {
                                 placeholder="Enter Password"
                                 value={password}
                                 secureTextEntry
+                                testID="login-password-input"
+                                accessibilityLabel="login-password-input"
                                 onChangeText={(text) => {
                                     setPassword(text);
                                     setPasswordError("");
@@ -352,7 +360,7 @@ const LoginScreen = () => {
                             </Text>
 
                             <OtpInput
-                                onChangeOTP={(code) => setOtp(code)}
+                                onChangeOTP={(code: string[]) => setOtp(code)}
                             />
 
                             <View style={styles.resendContainer}>
@@ -383,12 +391,14 @@ const LoginScreen = () => {
                                 title="Send OTP"
                                 onPress={handelSendOTP}
                                 buttonStyle={styles.button}
+                                testID="login-send-otp-button"
                             />
                         ) : (
                             <CustomButton
                                 title="Login"
                                 onPress={handelLogin}
                                 buttonStyle={styles.button}
+                                testID="login-otp-button"
                             />
                         )
                     ) : (
@@ -396,6 +406,7 @@ const LoginScreen = () => {
                             title="Login"
                             onPress={handelLoginPassword}
                             buttonStyle={styles.button}
+                            testID="login-password-button"
                         />
                     )}
 
