@@ -124,7 +124,7 @@ jobs:
           path: appium-artifacts
 
       - name: Verify Appium Android driver
-        run: npx appium driver list --installed | grep uiautomator2
+        run: npx appium driver list --installed 2>&1 | grep -i uiautomator2
 
       - name: Run Appium smoke test
         uses: reactivecircus/android-emulator-runner@v2.37.0
