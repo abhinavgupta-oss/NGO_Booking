@@ -1,5 +1,9 @@
 const path = require('path');
 const {remote} = require('webdriverio');
+const loginTests = require('./tests/login.test');
+const onboardingTests = require('./tests/onboarding.test');
+const bookingTests = require('./tests/booking.test');
+const {byAccessibilityId, byText, waitForDisplayed} = require('./helpers');
 
 const appPath =
   process.env.APPIUM_APK_PATH ||
@@ -9,20 +13,6 @@ const appPath =
   );
 
 const APP_PACKAGE = 'com.ngo_booking';
-
-function byAccessibilityId(id) {
-  return `~${id}`;
-}
-
-function byText(text) {
-  return `android=new UiSelector().text("${text}")`;
-}
-
-async function waitForDisplayed(driver, selector, timeout = 10000) {
-  const element = await driver.$(selector);
-  await element.waitForDisplayed({timeout});
-  return element;
-}
 
 async function runCase(name, testFn) {
   process.stdout.write(`- ${name}\n`);
@@ -42,59 +32,35 @@ async function run() {
       'appium:deviceName': process.env.APPIUM_DEVICE_NAME || 'Android Emulator',
       'appium:app': appPath,
       'appium:appPackage': APP_PACKAGE,
-      'appium:appActivity': '.MainActivity',
+      'appium:appActivity': process.env.APPIUM_APP_ACTIVITY || '.MainActivity',
+      'appium:appWaitPackage': APP_PACKAGE,
+      'appium:appWaitActivity': process.env.APPIUM_APP_WAIT_ACTIVITY || '.MainActivity',
       'appium:autoGrantPermissions': true,
-      'appium:newCommandTimeout': 60,
+      // keep remote commands short so failing tests don't hang
+      'appium:newCommandTimeout': Number(process.env.APPIUM_NEW_COMMAND_TIMEOUT || 30),
+      // reduce Appium idle wait to make startup checks faster
+      'appium:waitForIdleTimeout': Number(process.env.APPIUM_WAIT_IDLE_TIMEOUT || 1000),
     },
   });
 
   try {
-    await runCase('launches the NGO Booking package', async () => {
-      const packageName = await driver.getCurrentPackage();
+    const helpers = {
+      byAccessibilityId,
+      byText,
+      waitForDisplayed,
+    };
 
-      if (packageName !== APP_PACKAGE) {
-        throw new Error(`Expected ${APP_PACKAGE}, received ${packageName}`);
-      }
-    });
+    // Combine all test suites
+    const allTests = [
+      ...loginTests,
+      ...onboardingTests,
+      ...bookingTests,
+    ];
 
-    await runCase('shows the login screen after splash', async () => {
-      await waitForDisplayed(
-        driver,
-        byAccessibilityId('login-user-id-input'),
-        15000,
-      );
-      await waitForDisplayed(driver, byAccessibilityId('login-send-otp-button'));
-      await waitForDisplayed(driver, byAccessibilityId('login-mode-password'));
-    });
-
-    await runCase('validates empty OTP login form', async () => {
-      const sendOtpButton = await waitForDisplayed(
-        driver,
-        byAccessibilityId('login-send-otp-button'),
-      );
-
-      await sendOtpButton.click();
-      await waitForDisplayed(driver, byText('Phone number is required'));
-    });
-
-    await runCase('validates empty password login form', async () => {
-      const passwordMode = await waitForDisplayed(
-        driver,
-        byAccessibilityId('login-mode-password'),
-      );
-
-      await passwordMode.click();
-      await waitForDisplayed(driver, byAccessibilityId('login-password-input'));
-
-      const loginButton = await waitForDisplayed(
-        driver,
-        byAccessibilityId('login-password-button'),
-      );
-
-      await loginButton.click();
-      await waitForDisplayed(driver, byText('User ID is required'));
-      await waitForDisplayed(driver, byText('Password is required'));
-    });
+    // Run all tests
+    for (const testCase of allTests) {
+      await runCase(testCase.name, () => testCase.fn(driver, helpers));
+    }
   } finally {
     await driver.deleteSession();
   }
