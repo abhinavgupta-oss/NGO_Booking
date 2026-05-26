@@ -81,7 +81,7 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug -PciEmulator --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
@@ -93,7 +93,7 @@ jobs:
 
   appium:
     name: Appium Android smoke test
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: cd
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -114,6 +114,12 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
+      - name: Enable KVM
+        run: |
+          sudo sh -c "echo 'KERNEL==\"kvm\", GROUP=\"kvm\", MODE=\"0666\", OPTIONS+=\"static_node=kvm\"' > /etc/udev/rules.d/99-kvm4all.rules"
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Install dependencies
         run: npm ci
 
@@ -131,7 +137,7 @@ jobs:
         with:
           api-level: 35
           target: google_apis
-          arch: arm64-v8a
+          arch: x86_64
           profile: pixel_6
           script: |
             npx appium --base-path /wd/hub --log appium.log &
