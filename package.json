@@ -8,7 +8,9 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest --runInBand --no-cache",
-    "test:appium": "node e2e/appium-smoke.js"
+    "test:appium": "node e2e/appium-smoke.js",
+    "e2e": "npm run test:appium",
+    "e2e:short": "node -e \"process.env.E2E_WAIT_TIMEOUT=3000;process.env.APPIUM_NEW_COMMAND_TIMEOUT=20;process.env.APPIUM_WAIT_IDLE_TIMEOUT=1000; require('./e2e/appium-smoke.js')\""
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
