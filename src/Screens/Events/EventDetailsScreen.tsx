@@ -20,7 +20,7 @@ const EventDetailsScreen = ({ route, navigation }: any) => {
 
     const { eventId } = route.params;
 
-    const { fetchEventDetails, eventDetails, loading, error } = useEventStore();
+    const { fetchEventDetails, eventDetails, loading } = useEventStore();
 
     useEffect(() => {
         EventDetails();
@@ -31,7 +31,7 @@ const EventDetailsScreen = ({ route, navigation }: any) => {
             const resp = await fetchEventDetails({ eventId: eventId });
             console.log("Event Details:", resp);
         } catch (error:any) {
-            console.log("Event Details Error:", error);
+            console.log(error);
         }
     }
 

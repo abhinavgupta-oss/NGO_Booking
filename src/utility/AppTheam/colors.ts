@@ -1,5 +1,3 @@
-import { Icons } from "../utility";
-
 export const LightTheme = {
   background: "#F4F7FB",
   card: "#FFFFFF",

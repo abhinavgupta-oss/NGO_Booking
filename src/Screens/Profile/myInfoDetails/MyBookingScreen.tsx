@@ -1,9 +1,7 @@
-import { FlatList, Image, Pressable, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Pressable, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors } from "../../../utility/AppTheam";
-import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import {
-    useRoute,
     useNavigation
 } from "@react-navigation/native";
 import { useEffect, useState } from "react";

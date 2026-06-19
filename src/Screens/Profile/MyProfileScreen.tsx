@@ -100,7 +100,9 @@ const MyProfileScreen = () => {
                 email: myProfile?.email || "",
                 panNumber: myProfile?.panNumber || "",
             })
-        } catch (error: any) { }
+        } catch (error: any) {
+            console.log(error)
+        }
     };
 
     const handelLogOut = async () => {
@@ -127,7 +129,7 @@ const MyProfileScreen = () => {
             }
             return resp?.status
         } catch (error: any) {
-
+            console.log(error)
         } finally {
 
         }

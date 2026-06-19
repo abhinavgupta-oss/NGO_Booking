@@ -1,7 +1,6 @@
 import BaseService from "../BasicServices/BassicService";
 import { API } from "../BasicServices/endpoints";
 import { saveAuthData } from "../../Stores/AuthStore/AuthStorage";
-import { useProfileStore } from "../../Stores/useProfileStore";
 
 export const DevoteeSendOTP = async (payload: any) => {
     try {

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -6,22 +6,17 @@ import {
     ScrollView,
     StatusBar,
     FlatList,
-    Image,
     Dimensions,
     TouchableOpacity,
     Pressable,
 } from "react-native";
 
-import { useNavigation, useRoute } from "@react-navigation/native";
 import CommonHeader from "../../../Component/Header/CommonHeader";
 import { colors } from "../../../utility/AppTheam";
 import CustomeLoading from "../../../Component/Loading/CustomeLoading";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../../utility/AppTheam/ThemeContext";
-import { myBalancePayment, myBookingDetails, mybookingInvoice, myBookingPayment } from "../../../Services/Booking/BookingService";
+import { myBalancePayment, mybookingInvoice, myBookingPayment } from "../../../Services/Booking/BookingService";
 import { useBookingStore } from "../../../Stores/useBookingStore";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
-import { removeHtmlTags } from "../../../Helper/HtmlTagHelper";
 import TransactionModel from "./TransactionModel";
 import WebViewModel from "../../../Component/ScreenComponent/WebViewModel";
 const screenWidth = Dimensions.get("window").width;
@@ -29,12 +24,6 @@ const screenWidth = Dimensions.get("window").width;
 const BookingDetails = ({ route }) => {
     const { bookingId } = route.params;
 
-    const navigation = useNavigation<any>();
-
-
-    const flatListRef = useRef<FlatList>(null);
-
-    const [activeIndex, setActiveIndex] = useState(0);
     const [PaymentHitory, setPaymentHistory] = useState([])
     const [InviceDetails, setInviceDetails] = useState([])
     const [PaymentUrl, setPaymentUrl] = useState("")
@@ -52,7 +41,7 @@ const BookingDetails = ({ route }) => {
         try {
             console.log("Fetching Room Details for ID:", bookingId);
             const response = await fetchMyBookingDetails(bookingId);
-            console.log("RoomDetails Response:", BookingmyDetails);
+            console.log("RoomDetails Response:", BookingmyDetails, response);
             console.log("BookingmyDetails?.bookingId", BookingmyDetails?.bookingId)
             if (BookingmyDetails?.bookingId) {
                 const resp = await myBookingPayment({ bookingId: BookingmyDetails?.bookingId })
@@ -77,7 +66,7 @@ const BookingDetails = ({ route }) => {
             setShowPaymentModal(true)
             setPaymentUrl(resp?.paymentUrl)
         } catch (error: any) {
-
+            console.log("RoomDetails Error:", error);
         } finally {
 
         }
@@ -90,7 +79,7 @@ const BookingDetails = ({ route }) => {
             setInviceDetails(resp?.result)
             setInvoiceVisible(true)
         } catch (error: any) {
-
+            console.log("RoomDetails Error:", error);
         } finally {
 
         }

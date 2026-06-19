@@ -35,13 +35,13 @@ import AppEnvironment from "../../../utility/AppEnvironment";
 import CustomeLoading from "../../../Component/Loading/CustomeLoading";
 
 
-const useDebounce = (value: string, delay = 300) => {
+const useDebounce = (value: string,) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
-    }, delay);
+    }, 3000);
 
     return () => clearTimeout(handler);
   }, [value]);

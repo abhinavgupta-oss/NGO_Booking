@@ -15,9 +15,6 @@ import { colors } from '../../utility/AppTheam';
 import { getAppdetails } from '../../Services/Utils/UtilsService';
 import DeviceInfo from 'react-native-device-info';
 
-interface BuildType {
-    VersionCode?: string;
-}
 
 const SplashScreen = () => {
     const navigation = useNavigation<any>();
