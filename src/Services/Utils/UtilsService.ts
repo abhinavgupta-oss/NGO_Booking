@@ -8,8 +8,8 @@ export const getAppdetails = async () => {
         const response = await BaseService.get(API.AUTH_URL.APP_BUILD);
         return response?.result;
     } catch (error: any) {
-        console.log(error)
-        console.log(error?.customMessage)
+        // console.log(error)
+        // console.log(error?.customMessage)
         throw error;
     }
 };
@@ -21,8 +21,8 @@ export const logout = async () => {
         const response = await BaseService.get(API.UTILS.LOG_OUT);
         return response;
     } catch (error: any) {
-        console.log(error)
-        console.log(error?.customMessage)
+        // console.log(error)
+        // console.log(error?.customMessage)
         throw error;
     }
 };
@@ -34,8 +34,8 @@ export const GetCityList = async (payload: any) => {
         console.log("city:", response.result);
         return response;
     } catch (error: any) {
-        console.log(error)
-        console.log(error?.customMessage)
+        // console.log(error)
+        // console.log(error?.customMessage)
         throw error;
     }
 };
