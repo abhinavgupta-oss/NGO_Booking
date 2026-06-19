@@ -28,13 +28,13 @@ const SplashScreen = () => {
             try {
                 const timer = setTimeout(async () => {
                     const isLoggedIn = await isUserLoggedIn();
-                    console.log("isLoggedIn", isLoggedIn)
+                    // console.log("isLoggedIn", isLoggedIn)
                     const getTokenresp = await getAccessToken()
-                    console.log("getTokenresp", getTokenresp)
+                    // console.log("getTokenresp", getTokenresp)
                     const appDetails = await getAppdetails()
-                    console.log("appDetails", appDetails)
+                    // console.log("appDetails", appDetails)
                     const currentApp = DeviceInfo.getVersion();
-                    console.log("currentApp", currentApp)
+                    // console.log("currentApp", currentApp)
                     if (appDetails?.versionName > currentApp) {
                         navigation.replace("Update", { latest: appDetails })
                     }
