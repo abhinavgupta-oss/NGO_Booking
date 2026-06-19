@@ -47,6 +47,7 @@
     "@types/jest": "^29.5.13",
     "@types/react": "^19.2.0",
     "@types/react-test-renderer": "^19.1.0",
+    "@wdio/cli": "^9.29.0",
     "appium": "^3.4.2",
     "appium-uiautomator2-driver": "^7.5.2",
     "eslint": "^8.19.0",

@@ -17,6 +17,8 @@ interface CustomButtonProps {
   loading?: boolean;
   disabled?: boolean;
 
+  testID?: string;
+  accessibilityLabel?: string;
   // Custom Style
   buttonStyle?: ViewStyle;
   textStyle?: TextStyle;
@@ -29,11 +31,15 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   disabled = false,
   buttonStyle,
   textStyle,
+  testID,
+  accessibilityLabel,
 }) => {
   const isDisabled = disabled || loading;
 
   return (
     <TouchableOpacity
+      testID={testID}
+      accessibilityLabel={accessibilityLabel}
       activeOpacity={0.8}
       onPress={onPress}
       disabled={isDisabled}

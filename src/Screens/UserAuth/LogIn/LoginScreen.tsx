@@ -248,6 +248,8 @@ const LoginScreen = () => {
 
                     <View style={styles.toggleContainer}>
                         <TouchableOpacity
+                            testID="login-mode-otp"
+                            accessibilityLabel="login-mode-otp"
                             style={[
                                 styles.toggleButton,
                                 loginType === "OTP" && styles.activeToggle,
@@ -264,11 +266,13 @@ const LoginScreen = () => {
                                     styles.activeToggleText,
                                 ]}
                             >
-                             OTP
+                                OTP
                             </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
+                            testID="login-mode-password"
+                            accessibilityLabel="login-mode-password"
                             style={[
                                 styles.toggleButton,
                                 loginType === "PASSWORD" &&
@@ -300,7 +304,7 @@ const LoginScreen = () => {
                             {/* {loginType === "OTP"
                                 ? "Phone Number"
                                 : "User ID"} */}
-                                Phone Number
+                            Phone Number
                         </Text>
 
                         {!isNumberEditable && loginType === "OTP" && (
@@ -311,6 +315,8 @@ const LoginScreen = () => {
                     </View>
 
                     <CustomInput
+                        testID="login-Phone-input"
+                        accessibilityLabel="login-Phone-input"
                         icon={"phone"}
                         placeholder={"Enter Phone Number"}
                         value={UserID}
@@ -341,6 +347,8 @@ const LoginScreen = () => {
 
                             <View style={{ position: "relative" }}>
                                 <CustomInput
+                                    testID="login-Password-input"
+                                    accessibilityLabel="login-Password-input"
                                     icon="lock"
                                     placeholder="Enter Password or DOB"
                                     value={password}
@@ -380,10 +388,10 @@ const LoginScreen = () => {
                     {/* FORGET PASSWORD */}
                     {/* ========================= */}
 
-                    {loginType === "PASSWORD" &&(
-                        <View style={{flexDirection:"row",justifyContent:"flex-end",alignItems:"flex-end"}}>
-                            <Pressable onPress={()=>navigation.navigate("ForgetPassword")}>
-                            <Text style={styles.linkText}>Forget Password</Text>
+                    {loginType === "PASSWORD" && (
+                        <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "flex-end" }}>
+                            <Pressable onPress={() => navigation.navigate("ForgetPassword")}>
+                                <Text style={styles.linkText}>Forget Password</Text>
                             </Pressable>
                         </View>
                     )}
@@ -427,12 +435,16 @@ const LoginScreen = () => {
                     {loginType === "OTP" ? (
                         !showOtpArea ? (
                             <CustomButton
+                                testID="login-Send-OTP"
+                                accessibilityLabel="login-Send-OTP"
                                 title="Send OTP"
                                 onPress={handelSendOTP}
                                 buttonStyle={styles.button}
                             />
                         ) : (
                             <CustomButton
+                                testID="user-loginOtp-action"
+                                accessibilityLabel="user-loginOtp-action"
                                 title="Login"
                                 onPress={handelLogin}
                                 buttonStyle={styles.button}
@@ -440,6 +452,8 @@ const LoginScreen = () => {
                         )
                     ) : (
                         <CustomButton
+                            testID="user-loginPass-action"
+                            accessibilityLabel="user-loginPass-action"
                             title="Login"
                             onPress={handelLoginPassword}
                             buttonStyle={styles.button}
@@ -456,6 +470,8 @@ const LoginScreen = () => {
                         </Text>
 
                         <TouchableOpacity
+                            testID="user-register-action"
+                            accessibilityLabel="user-register-action"
                             onPress={() =>
                                 navigation.navigate("Register")
                             }
