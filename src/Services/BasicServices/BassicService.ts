@@ -139,10 +139,10 @@ const BaseService = {
     config: AxiosRequestConfig = {}
   ): Promise<T> => {
 
-    console.log(
-      "GET =>",
-      API.BASE_URL.DEV_URL + url
-    );
+    // console.log(
+    //   "GET =>",
+    //   API.BASE_URL.DEV_URL + url
+    // );
 
     const response: AxiosResponse<T> =
       await instance.get(url, config);

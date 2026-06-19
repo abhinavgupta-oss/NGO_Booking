@@ -29,7 +29,7 @@ const SplashScreen = () => {
                 const timer = setTimeout(async () => {
                     const isLoggedIn = await isUserLoggedIn();
                     // console.log("isLoggedIn", isLoggedIn)
-                    const getTokenresp = await getAccessToken()
+                    await getAccessToken()
                     // console.log("getTokenresp", getTokenresp)
                     const appDetails = await getAppdetails()
                     // console.log("appDetails", appDetails)
