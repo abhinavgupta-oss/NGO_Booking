@@ -8,7 +8,6 @@ import {
     StatusBar,
     Image,
     TextInput,
-    Modal,
     Pressable,
     FlatList
 } from "react-native";
@@ -16,7 +15,6 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { useNavigation } from "@react-navigation/native";
-import { colors } from "../../utility/AppTheam";
 import { getRoomTypes } from "../../Services/Booking/BookingService";
 import AppEnvironment from "../../utility/AppEnvironment";
 import { useBookingStore } from "../../Stores/useBookingStore";
@@ -36,13 +34,11 @@ const RoomAvailableScreen = () => {
     const [searchText, setSearchText] = useState("");
     const [checkInDate, setCheckInDate] = useState<Date | null>(null);
     const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
-    const [beds, setBeds] = useState(0);
     const [maxGuests, setMaxGuests] = useState(0);
     const [selectedRoomType, setSelectedRoomType] = useState<number | null>(null);
-    const [showFilter, setShowFilter] = useState(false);
     const [checkInPicker, setCheckInPicker] = useState(false);
     const [checkOutPicker, setCheckOutPicker] = useState(false);
-    const { colors, darkMode, toggleTheme } = useTheme();
+    const { colors } = useTheme();
     const styles = createStyles(colors);
 
     const navigation = useNavigation();
@@ -63,7 +59,6 @@ const RoomAvailableScreen = () => {
             const payload = {
 
                 ...(maxGuests > 0 && { maxGuests }),
-                ...(beds > 0 && { numberOfBeds: beds }),
                 ...(selectedRoomType && { roomTypeId: selectedRoomType }),
                 ...(searchText?.trim() && { search: searchText.trim() }),
                 branchCode: AppEnvironment.BRANCH_CODE,
@@ -97,22 +92,6 @@ const RoomAvailableScreen = () => {
         }
     };
 
-    const resetFilters = async () => {
-
-        setBeds(0);
-        setMaxGuests(0);
-        setSelectedRoomType(null);
-        setSearchText("");
-
-        await fetchRoomList({
-            branchCode: AppEnvironment.BRANCH_CODE,
-        });
-        setShowFilter(false);
-    };
-
-    const handleRoomType = (id: number) => {
-        setSelectedRoomType(id);
-    };
 
     const roomAvailable = {
         checkIn: checkInDate,
@@ -335,9 +314,7 @@ const RoomAvailableScreen = () => {
                         </View>
                     </Pressable>
 
-                    <Pressable style={styles.dateCard} onPress={() => {
-                        setShowFilter(true)
-                    }}>
+                    <Pressable style={styles.dateCard} >
                         <Text style={styles.dateLabel}>
                             Guests
                         </Text>

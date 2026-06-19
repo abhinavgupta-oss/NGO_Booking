@@ -1,10 +1,7 @@
-// src/screens/MyProfileScreen.tsx
-
 import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
-    Switch,
     StyleSheet,
     TouchableOpacity,
     Image,
@@ -20,7 +17,6 @@ import { useNavigation } from "@react-navigation/native";
 import { logout } from "../../Services/Utils/UtilsService";
 import { removeAuthData } from "../../Stores/AuthStore/AuthStorage";
 
-import { colors } from "../../utility/AppTheam";
 import { useProfileStore } from "../../Stores/useProfileStore";
 
 import CustomeLoading from "../../Component/Loading/CustomeLoading";
@@ -43,12 +39,6 @@ const profileMenu = [
         icon: "volunteer-activism",
         screen: "MyDonation",
     },
-    // {
-    //     id: 3,
-    //     title: "Address",
-    //     icon: "location-on",
-    //     screen: "Address",
-    // },
     {
         id: 4,
         title: "General Settings",
@@ -60,9 +50,8 @@ const profileMenu = [
 const MyProfileScreen = () => {
     const navigation: any = useNavigation();
     const { showToast } = useToast();
-    // const { colors } = useTheme();
     const { myProfile, loading, fetchMyprofile } = useProfileStore();
-    const { colors, darkMode, toggleTheme } = useTheme();
+    const { colors } = useTheme();
     const styles = createStyles(colors);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [UserData, setUserData] = useState({
@@ -126,7 +115,7 @@ const MyProfileScreen = () => {
                     routes: [{ name: "Login" }],
                 });
             }
-        } catch (error: any) { }
+        } catch (error: any) { console.log(error) }
     };
 
     const handelProfileUpdate = async (data: any) => {

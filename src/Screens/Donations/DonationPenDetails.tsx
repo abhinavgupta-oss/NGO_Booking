@@ -22,7 +22,6 @@ import CustomInput from "../../Component/formComponent/CustomInput";
 
 import CustomCalendar from "../../Component/formComponent/CustomCalendar";
 import { GetCityList } from "../../Services/Utils/UtilsService";
-import CustomPicker from "../../Component/formComponent/CustomPicker";
 import { useNavigation } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
 import CustomButton from "../../Component/formComponent/CustomButton";
@@ -136,7 +135,7 @@ const DonationPenDetails = ({ route }) => {
 
             setShowCityDropdown(true);
 
-        } catch (_error) {
+        } catch (error: any) {
 
             console.log(
                 "CITY ERROR",
@@ -250,7 +249,7 @@ const DonationPenDetails = ({ route }) => {
             navigation.replace("DevoteeReceipt", { InvoiceDetails: respInvoice?.result })
 
         } catch (error: any) {
-
+            console.log(error)
         }
     }
     const parseDate = (dateStr: string) => {

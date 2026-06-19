@@ -95,7 +95,7 @@ const ForgetPassword = () => {
             console.log(resp)
             console.log("OTP Verified");
             setSection(2)
-        } catch (error) {
+        } catch (error:any) {
             console.log(error);
         }
     };

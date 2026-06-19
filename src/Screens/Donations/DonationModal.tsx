@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -12,7 +12,6 @@ import {
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import CustomInput from "../../Component/formComponent/CustomInput";
-import { useNavigation } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
 import AppEnvironment from "../../utility/AppEnvironment";
 import CustomButton from "../../Component/formComponent/CustomButton";
@@ -36,8 +35,8 @@ const DonationModal = ({
         Details?.defaultAmount?.toString() || " "
     );
     const { myProfile } = useProfileStore();
-    const [_name, setName] = useState(myProfile?.fullName || "");
-    const [_mobile, setMobile] = useState(myProfile?.mobile || "");
+    const [name, setName] = useState(myProfile?.fullName || "");
+    const [mobile, setMobile] = useState(myProfile?.mobile || "");
 
     const [nameError, setNameError] = useState("");
     const [mobileError, setMobileError] = useState("");
@@ -56,8 +55,8 @@ const DonationModal = ({
     // REGEX
     // =========================
 
-    const nameRegex = /^[A-Za-z ]{3,50}$/;
-    const mobileRegex = /^[6-9]\d{9}$/;
+    // const nameRegex = /^[A-Za-z ]{3,50}$/;
+    // const mobileRegex = /^[6-9]\d{9}$/;
 
     // =========================
     // RESET
@@ -157,14 +156,14 @@ const DonationModal = ({
                 ESevaId: Details?.id,
                 amount: Number(donationAmount),
                 branchCode: AppEnvironment.BRANCH_CODE,
-                mobile: myProfile?.mobile,
-                name: myProfile?.fullName,
+                mobile: myProfile?.mobile || mobile,
+                name: myProfile?.fullName || name,
                 paymentModeId: 1,
                 paymentTypeId: 1,
             };
             onSubmit(Payment);
 
-        } catch (error) {
+        } catch (error:any) {
 
             console.log(
                 "Donation Payment Error",

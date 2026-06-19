@@ -1,7 +1,4 @@
-// src/screens/MyDonationScreen.tsx
-
 import React, { useEffect, useState } from "react";
-
 import {
     View,
     Text,
@@ -9,18 +6,12 @@ import {
     TouchableOpacity,
     StatusBar,
     FlatList,
-    Image,
-    Modal,
 } from "react-native";
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 
 import { useNavigation } from "@react-navigation/native";
-import { DevoteemyDonation } from "../../../Services/Devotee/DevoteeServices";
-import { Icons } from "../../../utility/utility";
-import WebView from "react-native-webview";
 import { DevoteeInVoiceDetails } from "../../../Services/Donation/DonationService";
-import { colors } from "../../../utility/AppTheam";
 import CommonHeader from "../../../Component/Header/CommonHeader";
 import { useTheme } from "../../../utility/AppTheam/ThemeContext";
 import CustomeLoading from "../../../Component/Loading/CustomeLoading";
@@ -29,8 +20,6 @@ import { useDonationStore } from "../../../Stores/useDonationStore";
 const MyDonationScreen = ({ route }) => {
 
     const navigation = useNavigation();
-    const [InvoiceUrl, setInvoiceURL] = useState("");
-    const [InvoiceModel, setInvoiceModel] = useState(false)
     const [pageNumber, setPageNumber] = useState(1);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMoreData, setHasMoreData] = useState(true);
@@ -39,7 +28,7 @@ const MyDonationScreen = ({ route }) => {
     const { MydonationList, loading, fetchMyDonationList } = useDonationStore();
 
 
-    const { colors, darkMode, toggleTheme } = useTheme();
+    const { colors } = useTheme();
     const styles = createStyles(colors);
 
     useEffect(() => {
@@ -90,7 +79,7 @@ const MyDonationScreen = ({ route }) => {
             navigation.navigate("DevoteeReceipt", { InvoiceDetails: respInvoice?.result })
 
         } catch (error: any) {
-
+            console.log(error)
         }
     }
 
@@ -334,7 +323,7 @@ const MyDonationScreen = ({ route }) => {
                     padding: 16,
                     paddingBottom: 40,
                     flexGrow: 1,
-                }} 
+                }}
                 refreshing={refreshing}
                 onRefresh={onRefresh}
                 onEndReached={loadMore}

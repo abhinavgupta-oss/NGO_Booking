@@ -1,16 +1,15 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
     View,
     Modal,
     StyleSheet,
 } from "react-native";
 
-import MaterialIcons from "@react-native-vector-icons/material-icons";
-import CustomInput from "../../Component/formComponent/CustomInput";
-import { DonationPayment, DonationPaymentVerify } from "../../Services/Donation/DonationService";
+import { DonationPaymentVerify } from "../../Services/Donation/DonationService";
 import { useNavigation } from "@react-navigation/native";
 import WebView from "react-native-webview";
 import { useToast } from "../../Component/Toast/ToastContext";
+import CustomeLoading from "../../Component/Loading/CustomeLoading";
 
 interface Props {
     visible: boolean;
@@ -25,12 +24,10 @@ const DonationPaymentModel = ({
 }: Props) => {
     const { showToast } = useToast();
     const navigation = useNavigation();
-    const [_loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const paymentHandled = useRef(false);
 
     const PayUrl = Details?.paymentUrl
-    console.log(Details)
-
 
     const handleNavigationChange = async (navState: any) => {
         const { url } = navState;
@@ -122,6 +119,7 @@ const DonationPaymentModel = ({
                 />
 
             </View>
+            <CustomeLoading isLoading={loading}/>
         </Modal>
     );
 };

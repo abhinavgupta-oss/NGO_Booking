@@ -12,7 +12,7 @@ import {
 } from "react-native";
 
 import { useRoute, useNavigation } from "@react-navigation/native";
-import LinearGradient from "react-native-linear-gradient";
+// import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 
 import { colors } from "../../utility/AppTheam";
@@ -45,7 +45,7 @@ const RoomDetailsScreen = () => {
         try {
             console.log("Fetching Room Details for ID:", roomId);
             const response = await fetchRoomDetails(roomId);
-            console.log("RoomDetails Response:", roomDetails);
+            console.log("RoomDetails Response:", roomDetails,response);
         } catch (error) {
             console.log("RoomDetails Error:", error);
         }

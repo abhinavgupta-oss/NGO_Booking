@@ -3,13 +3,11 @@ import {
   Modal,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
 } from "react-native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
-import { colors } from "../../utility/AppTheam";
 import CustomButton from "../../Component/formComponent/CustomButton";
 import CustomInput from "../../Component/formComponent/CustomInput";
 import CustomCalendar from "../../Component/formComponent/CustomCalendar";

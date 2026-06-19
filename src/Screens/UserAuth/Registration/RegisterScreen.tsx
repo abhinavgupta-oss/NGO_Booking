@@ -13,11 +13,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
-  FlatList,
   ActivityIndicator,
 } from "react-native";
 
-import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 
@@ -33,7 +31,6 @@ import {
 import { useToast } from "../../../Component/Toast/ToastContext";
 import DeviceInfo from "react-native-device-info";
 import CustomButton from "../../../Component/formComponent/CustomButton";
-import { colors } from "../../../utility/AppTheam";
 import AppEnvironment from "../../../utility/AppEnvironment";
 import CustomeLoading from "../../../Component/Loading/CustomeLoading";
 
@@ -61,7 +58,6 @@ const RegisterScreen = () => {
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
   const [dob, setDob] = useState("");
-  const [password, setPassword] = useState("");
   const [city, setCity] = useState("");
   const [cityList, setCityList] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -75,7 +71,6 @@ const RegisterScreen = () => {
 
   const [showBirthPicker, setShowBirthPicker] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   // ================= VALIDATION =================
 
@@ -148,7 +143,7 @@ const RegisterScreen = () => {
     const fullNameError = validateField("fullName", fullName);
     const mobileError = validateField("mobile", mobile);
     // const emailError = validateField("email", email);
-    const dobError = validateField("dob", dob);
+    // const dobError = validateField("dob", dob);
     // const passwordError = validateField("password", password);
 
     return !(
@@ -243,15 +238,15 @@ const RegisterScreen = () => {
 
 
 
-  const handleCityChange = (text: string) => {
-    setCity(text);
-    setSelectedCityId(null);
+  // const handleCityChange = (text: string) => {
+  //   setCity(text);
+  //   setSelectedCityId(null);
 
-    if (text.trim().length < 3) {
-      setCityList([]);
-      setShowDropdown(false);
-    }
-  };
+  //   if (text.trim().length < 3) {
+  //     setCityList([]);
+  //     setShowDropdown(false);
+  //   }
+  // };
 
   const fetchCityList = async (searchText: string) => {
     try {

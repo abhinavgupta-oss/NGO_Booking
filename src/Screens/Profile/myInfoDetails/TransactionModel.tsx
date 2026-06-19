@@ -4,7 +4,6 @@ import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
     ScrollView,
 } from "react-native";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
