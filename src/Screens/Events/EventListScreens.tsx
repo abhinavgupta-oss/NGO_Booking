@@ -33,11 +33,14 @@ interface EventItem {
 }
 
 const EventListScreens = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const route = useRoute<any>();
 
-    const { eventList, loading: eventLoading, fetchEventList } = useEventStore();
-
+    const {
+        eventList,
+        loading: eventLoading,
+        fetchEventList,
+    } = useEventStore();
 
     // 1 = Upcoming | 2 = Ongoing | 3 = Past
     const [selectedType, setSelectedType] = useState<1 | 2 | 3>(
@@ -45,25 +48,24 @@ const EventListScreens = () => {
     );
 
     useEffect(() => {
-        EventList(selectedType);
-    }, [selectedType]);
+        const eventListApi = async () => {
+            try {
+                const eventPayload = {
+                    eventFilterTypeId: selectedType,
+                    pageNumber: 1,
+                    pageSize: 10,
+                    statusId: 2,
+                };
 
-    const EventList = async (typeId: number) => {
-        try {
-
-            const eventPayload = {
-                eventFilterTypeId: typeId,
-                pageNumber: 1,
-                pageSize: 10,
-                statusId: 2,
+                const respList = await fetchEventList(eventPayload);
+                console.log("respList", respList);
+            } catch (error: any) {
+                console.log("Event List Error:", error);
             }
-            const respList = await fetchEventList(eventPayload);
-            console.log("respList", respList);
+        };
 
-        } catch (error:any) {
-            console.log("Event List Error:", error);
-        }
-    };
+        eventListApi();
+    }, [selectedType, fetchEventList]);
 
     const renderItem = ({ item }: { item: EventItem }) => {
         return (
@@ -72,37 +74,31 @@ const EventListScreens = () => {
                 style={styles.cardWrapper}
                 onPress={() =>
                     navigation.navigate("EventDetails", {
-                            eventId: item.id,
-                        })
-                    }
+                        eventId: item.id,
+                    })
+                }
             >
                 <LinearGradient
                     colors={["#FFFFFF", "#FFF7ED"]}
                     style={styles.card}
                 >
-                    {/* EVENT IMAGE */}
-
                     <Image
                         source={{ uri: item?.bannerURL }}
                         style={styles.eventImage}
                         resizeMode="cover"
                     />
 
-                    {/* EVENT DETAILS */}
-
                     <View style={styles.contentContainer}>
                         <Text
                             numberOfLines={1}
                             style={styles.title}
                         >
-                            {item.title}
+                            {item?.title}
                         </Text>
 
                         <Text style={styles.eventType}>
                             {item?.eventTypeName}
                         </Text>
-
-                        {/* START DATE */}
 
                         <View style={styles.infoRow}>
                             <MaterialIcons
@@ -113,18 +109,14 @@ const EventListScreens = () => {
 
                             <Text style={styles.infoText}>
                                 {item?.startDate}
-
-                                {item?.startTimeHr && (
-                                    <> {" • "}
+                                {item?.startTimeHr ? (
+                                    <>
+                                        {" • "}
                                         {item?.startTimeHr}
                                     </>
-                                )}
-
-
+                                ) : null}
                             </Text>
                         </View>
-
-                        {/* END DATE */}
 
                         <View style={styles.infoRow}>
                             <MaterialIcons
@@ -134,15 +126,15 @@ const EventListScreens = () => {
                             />
 
                             <Text style={styles.infoText}>
-                                {item?.endDate} {item?.endTimeHr && (
-                                    <> {" • "}
+                                {item?.endDate}
+                                {item?.endTimeHr ? (
+                                    <>
+                                        {" • "}
                                         {item?.endTimeHr}
                                     </>
-                                )}
+                                ) : null}
                             </Text>
                         </View>
-
-                        {/* LOCATION */}
 
                         <View style={styles.infoRow}>
                             <MaterialIcons
@@ -171,20 +163,10 @@ const EventListScreens = () => {
                 barStyle="dark-content"
             />
 
-            {/* HEADER */}
-
-             <CommonHeader title="Events" />
-
-            {/* TOGGLE BUTTON */}
-
-            {/* TOGGLE BUTTON */}
+            <CommonHeader title="Events" />
 
             <View style={styles.toggleContainer}>
-
-
-
-                {/* ONGOING */}
-
+                {/* Ongoing */}
                 <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => setSelectedType(2)}
@@ -218,8 +200,7 @@ const EventListScreens = () => {
                     </LinearGradient>
                 </TouchableOpacity>
 
-                {/* UPCOMING */}
-
+                {/* Upcoming */}
                 <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => setSelectedType(1)}
@@ -253,8 +234,7 @@ const EventListScreens = () => {
                     </LinearGradient>
                 </TouchableOpacity>
 
-                {/* PAST */}
-
+                {/* Past */}
                 <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => setSelectedType(3)}
@@ -287,30 +267,32 @@ const EventListScreens = () => {
                         </Text>
                     </LinearGradient>
                 </TouchableOpacity>
-
             </View>
 
-            {/* LOADER */}
             <FlatList
-                data={eventList}
-                keyExtractor={(item) =>
-                    item.id.toString()
-                }
+                data={eventList || []}
+                keyExtractor={(item) => String(item.id)}
                 renderItem={renderItem}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.listContainer}
+                contentContainerStyle={[
+                    styles.listContainer,
+                    eventList?.length === 0 && {
+                        flexGrow: 1,
+                    },
+                ]}
                 ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <MaterialIcons
-                            name="search"
-                            size={70}
-                            color="#CCC"
-                        />
-
-                        <Text style={styles.emptyText}>
-                            No Events Found
-                        </Text>
-                    </View>
+                    !eventLoading ? (
+                        <View style={styles.emptyContainer}>
+                            <MaterialIcons
+                                name="search-off"
+                                size={70}
+                                color="#CCC"
+                            />
+                            <Text style={styles.emptyText}>
+                                No Events Found
+                            </Text>
+                        </View>
+                    ) : null
                 }
             />
 

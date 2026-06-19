@@ -34,24 +34,40 @@ const BookingDetails = ({ route }) => {
     const { BookingmyDetails, loading, fetchMyBookingDetails, } = useBookingStore();
 
     useEffect(() => {
-        RoomDetails();
-    }, []);
+        const roomDetails = async () => {
+            try {
+                console.log("Fetching Room Details for ID:", bookingId);
 
-    const RoomDetails = async () => {
-        try {
-            console.log("Fetching Room Details for ID:", bookingId);
-            const response = await fetchMyBookingDetails(bookingId);
-            console.log("RoomDetails Response:", BookingmyDetails, response);
-            console.log("BookingmyDetails?.bookingId", BookingmyDetails?.bookingId)
-            if (BookingmyDetails?.bookingId) {
-                const resp = await myBookingPayment({ bookingId: BookingmyDetails?.bookingId })
-                setPaymentHistory(resp)
-                console.log("RoomDetails", resp)
+                const response = await fetchMyBookingDetails(bookingId);
+
+                console.log("RoomDetails Response:", response);
+
+                const bookingIdValue =
+                    response?.bookingId || response?.result?.bookingId;
+
+                console.log("bookingId:", bookingIdValue);
+
+                if (bookingIdValue) {
+                    const paymentResp = await myBookingPayment({
+                        bookingId: bookingIdValue,
+                    });
+
+                    setPaymentHistory(paymentResp);
+
+                    console.log(
+                        "Payment History Response:",
+                        paymentResp
+                    );
+                }
+            } catch (error) {
+                console.log("RoomDetails Error:", error);
             }
-        } catch (error) {
-            console.log("RoomDetails Error:", error);
+        };
+
+        if (bookingId) {
+            roomDetails();
         }
-    }
+    }, [bookingId,fetchMyBookingDetails]);
 
 
     const PayBalanceAmmount = async () => {
@@ -359,39 +375,6 @@ const BookingDetails = ({ route }) => {
                     </View>
                 </View>
 
-                {/* DEVOTEE DETAILS */}
-                {/* <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Devotee Details</Text>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Name</Text>
-                        <Text style={styles.infoValue}>
-                            {room?.devoteeName}
-                        </Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Mobile</Text>
-                        <Text style={styles.infoValue}>
-                            {room?.mobileNumber}
-                        </Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Email</Text>
-                        <Text style={styles.infoValue}>
-                            {room?.email}
-                        </Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Guests</Text>
-                        <Text style={styles.infoValue}>
-                            {room?.totalGuests}
-                        </Text>
-                    </View>
-                </View> */}
-
                 {/* BOOKING STATUS */}
                 <View style={styles.statusCard}>
                     <MaterialIcons
@@ -594,15 +577,11 @@ const BookingDetails = ({ route }) => {
 
             </ScrollView>
 
-
-
             <TransactionModel
                 visible={invoiceVisible}
                 onClose={() => setInvoiceVisible(false)}
                 booking={InviceDetails}
             />
-
-
 
             <WebViewModel
                 visible={showPaymentModal}

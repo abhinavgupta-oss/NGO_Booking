@@ -293,12 +293,8 @@ const RegisterScreen = () => {
 
     if (debouncedCity.trim().length >= 3) {
       fetchCityList(debouncedCity);
-    } else {
-      setCityList([]);
-      setShowDropdown(false);
     }
-
-  }, [debouncedCity]);
+  }, [debouncedCity, selectedCityId]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

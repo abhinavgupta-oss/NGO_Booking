@@ -90,7 +90,7 @@ const DashboardScreen = () => {
     const { myProfile, loading, fetchMyprofile } = useProfileStore();
     const { eventList, fetchEventList } = useEventStore();
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const resp = await fetchMyprofile();
             console.log("resp", resp)
@@ -112,7 +112,7 @@ const DashboardScreen = () => {
         } catch (error:any) {
             console.log("error", error);
         }
-    };
+    }, [fetchMyprofile, fetchEventList]);
 
     useFocusEffect(
         useCallback(() => {

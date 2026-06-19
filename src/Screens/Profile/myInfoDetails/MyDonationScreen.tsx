@@ -32,43 +32,42 @@ const MyDonationScreen = ({ route }) => {
     const styles = createStyles(colors);
 
     useEffect(() => {
-        fetchDonationData(1, false);
-    }, []);
+        const fetchDonationData = async (
+            page = 1,
+            isLoadMore = false,
+        ) => {
+            try {
+                if (isLoadMore) {
+                    setIsLoadingMore(true);
+                }
 
-    const fetchDonationData = async (
-        page = 1,
-        isLoadMore = false,
-    ) => {
-        try {
-            if (isLoadMore) {
-                setIsLoadingMore(true);
+                const payload = {
+                    pageNumber: page,
+                    pageSize: 10,
+                    eUserId: userId,
+                };
+
+                const response = await fetchMyDonationList(
+                    payload,
+                    isLoadMore,
+                );
+
+                const newData = response?.result || [];
+
+                setHasMoreData(newData.length === 10);
+
+            } catch (error) {
+                console.log(
+                    "Donation Error =>",
+                    error,
+                );
+            } finally {
+                setIsLoadingMore(false);
+                setRefreshing(false);
             }
-
-            const payload = {
-                pageNumber: page,
-                pageSize: 10,
-                eUserId: userId,
-            };
-
-            const response = await fetchMyDonationList(
-                payload,
-                isLoadMore,
-            );
-
-            const newData = response?.result || [];
-
-            setHasMoreData(newData.length === 10);
-
-        } catch (error) {
-            console.log(
-                "Donation Error =>",
-                error,
-            );
-        } finally {
-            setIsLoadingMore(false);
-            setRefreshing(false);
-        }
-    };
+        };
+        fetchDonationData(1, false);
+    }, [userId, fetchMyDonationList]);
 
     const handelInvoice = async (url: any) => {
         try {

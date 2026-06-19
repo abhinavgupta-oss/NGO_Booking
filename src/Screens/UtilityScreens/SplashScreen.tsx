@@ -24,38 +24,37 @@ const SplashScreen = () => {
     // const [deviceBuild, setDeviceBuild] = useState('');
 
     useEffect(() => {
-        checkLogin();
-    }, []);
-    
-    const checkLogin = async () => {
-        try {
-            const timer = setTimeout(async () => {
-                const isLoggedIn = await isUserLoggedIn();
-                console.log("isLoggedIn", isLoggedIn)
-                const getTokenresp = await getAccessToken()
-                console.log("getTokenresp", getTokenresp)
-                const appDetails = await getAppdetails()
-                console.log("appDetails", appDetails)
-                const currentApp = DeviceInfo.getVersion();
-                console.log("currentApp", currentApp)
-                if (appDetails?.versionName > currentApp) {
-                    navigation.replace("Update", { latest: appDetails })
-                }
-                else {
-                    if (isLoggedIn) {
-                        navigation.replace("Dashboard");
-                    } else {
-                        navigation.replace("Login");
+        const checkLogin = async () => {
+            try {
+                const timer = setTimeout(async () => {
+                    const isLoggedIn = await isUserLoggedIn();
+                    console.log("isLoggedIn", isLoggedIn)
+                    const getTokenresp = await getAccessToken()
+                    console.log("getTokenresp", getTokenresp)
+                    const appDetails = await getAppdetails()
+                    console.log("appDetails", appDetails)
+                    const currentApp = DeviceInfo.getVersion();
+                    console.log("currentApp", currentApp)
+                    if (appDetails?.versionName > currentApp) {
+                        navigation.replace("Update", { latest: appDetails })
                     }
-                }
+                    else {
+                        if (isLoggedIn) {
+                            navigation.replace("Dashboard");
+                        } else {
+                            navigation.replace("Login");
+                        }
+                    }
 
-            }, 3000);
+                }, 3000);
 
-            return () => clearTimeout(timer);
-        } catch (error) {
-            console.log("Login Check Error:", error);
-        }
-    };
+                return () => clearTimeout(timer);
+            } catch (error) {
+                console.log("Login Check Error:", error);
+            }
+        };
+        checkLogin();
+    }, [navigation]);
 
     return (
         <ImageBackground

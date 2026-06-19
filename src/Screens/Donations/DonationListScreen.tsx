@@ -37,24 +37,25 @@ interface EventItem {
 
 const DonationListScreen = () => {
     const { colors } = useTheme();
-    const styles = createStyles(colors); 
+    const styles = createStyles(colors);
     const navigation: any = useNavigation();
     const { donationList, loading, fetchDonationList } = useDonationStore();
 
+
+
     useEffect(() => {
+        const fetchEventList = async () => {
+            try {
+                const sevaDetails = { branchCode: AppEnvironment.BRANCH_CODE, statusId: 2 }
+
+                const respList = await fetchDonationList(sevaDetails, false);
+                console.log("respList", respList)
+            } catch (error) {
+                console.log("Event List Error:", error);
+            }
+        };
         fetchEventList();
     }, [fetchDonationList]);
-
-    const fetchEventList = async () => {
-        try {
-            const sevaDetails = { branchCode: AppEnvironment.BRANCH_CODE, statusId: 2 }
-
-            const respList = await fetchDonationList(sevaDetails,false);
-            console.log("respList", respList)
-        } catch (error) {
-            console.log("Event List Error:", error);
-        }
-    };
 
     const handelNavigation = (item: EventItem) => {
         return () => {
@@ -74,10 +75,10 @@ const DonationListScreen = () => {
                     {/* EVENT IMAGE */}
 
                     <Image
-                        source={item?.bannerURL ?{ uri: item?.bannerURL }:Images.login}
+                        source={item?.bannerURL ? { uri: item?.bannerURL } : Images.login}
                         style={styles.eventImage}
                         resizeMode="cover"
-                    /> 
+                    />
 
                     {/* EVENT DETAILS */}
 
@@ -90,7 +91,7 @@ const DonationListScreen = () => {
                         </Text>
 
                         <Text style={{ ...styles.eventType, color: colors.primary }}>
-                            <Text style={{color:colors.text}}>{item.statusName}</Text>
+                            <Text style={{ color: colors.text }}>{item.statusName}</Text>
                         </Text>
                         {item.endDate && (
                             <>
@@ -204,7 +205,7 @@ const createStyles = (colors: any) =>
         eventType: {
             fontSize: 13,
             fontFamily: "Poppins-Medium",
-            color:colors.subText
+            color: colors.subText
         },
 
         infoRow: {

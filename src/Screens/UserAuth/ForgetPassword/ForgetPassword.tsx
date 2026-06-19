@@ -192,7 +192,7 @@ const ForgetPassword = () => {
                 contentContainerStyle={styles.content}
             >
 
-                {section == 1 && (
+                {section === 1 && (
                     <View style={styles.card}>
                         <View style={styles.iconContainer}>
                             <MaterialIcons
@@ -260,7 +260,7 @@ const ForgetPassword = () => {
                     </View>
                 )}
 
-                {section == 2 && (
+                {section === 2 && (
                     <View style={styles.card}>
                         <View style={styles.iconContainer}>
                             <MaterialIcons

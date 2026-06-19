@@ -85,25 +85,24 @@ const MyProfileScreen = () => {
     );
 
     useEffect(() => {
+        const fetchProfileData = async () => {
+            try {
+                await fetchMyprofile();
+                setUserData({
+                    firstName: myProfile?.firstName || "",
+                    middleName: myProfile?.middleName || "",
+                    lastName: myProfile?.lastName || "",
+                    dob: myProfile?.dob || "",
+                    mobile: myProfile?.mobile || "",
+                    email: myProfile?.email || "",
+                    panNumber: myProfile?.panNumber || "",
+                })
+            } catch (error: any) {
+                console.log(error)
+            }
+        };
         fetchProfileData();
-    }, []);
-
-    const fetchProfileData = async () => {
-        try {
-            await fetchMyprofile();
-            setUserData({
-                firstName: myProfile?.firstName || "",
-                middleName: myProfile?.middleName || "",
-                lastName: myProfile?.lastName || "",
-                dob: myProfile?.dob || "",
-                mobile: myProfile?.mobile || "",
-                email: myProfile?.email || "",
-                panNumber: myProfile?.panNumber || "",
-            })
-        } catch (error: any) {
-            console.log(error)
-        }
-    };
+    }, [fetchMyprofile, myProfile]);
 
     const handelLogOut = async () => {
         try {

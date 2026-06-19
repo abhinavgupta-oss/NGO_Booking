@@ -23,47 +23,42 @@ const MyBookingScreen = () => {
         setPageNumber(1);
         setHasMoreData(true);
 
-        fetchMyRoomData(1, false);
-    }, [activeTab]);
+        const fetchMyRoomData = async (
+            page = 1,
+            isLoadMore = false,
+        ) => {
+            try {
+                if (isLoadMore) {
+                    setIsLoadingMore(true);
+                }
 
-    const getStatusId = () => {
-        return activeTab === "upcoming" ? 2 : 4;
-    };
+                const payload = {
+                    pageNumber: page,
+                    pageSize: 10,
+                    statusId: getStatusId(),
+                };
 
-    const fetchMyRoomData = async (
-        page = 1,
-        isLoadMore = false,
-    ) => {
-        try {
-            if (isLoadMore) {
-                setIsLoadingMore(true);
+                const response = await fetchMyBookingList(
+                    payload,
+                    isLoadMore,
+                );
+
+                const newData = response?.result || [];
+
+                setHasMoreData(newData.length === 10);
+
+            } catch (error) {
+                console.log(
+                    "Donation Error =>",
+                    error,
+                );
+            } finally {
+                setIsLoadingMore(false);
+                setRefreshing(false);
             }
-
-            const payload = {
-                pageNumber: page,
-                pageSize: 10,
-                statusId: getStatusId(),
-            };
-
-            const response = await fetchMyBookingList(
-                payload,
-                isLoadMore,
-            );
-
-            const newData = response?.result || [];
-
-            setHasMoreData(newData.length === 10);
-
-        } catch (error) {
-            console.log(
-                "Donation Error =>",
-                error,
-            );
-        } finally {
-            setIsLoadingMore(false);
-            setRefreshing(false);
-        }
-    };
+        };
+        fetchMyRoomData(1, false);
+    }, [activeTab, fetchMyBookingList]);
 
     const onRefresh = async () => {
         setRefreshing(true);

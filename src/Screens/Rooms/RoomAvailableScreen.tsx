@@ -44,51 +44,47 @@ const RoomAvailableScreen = () => {
 
     useEffect(() => {
         if (checkInDate && checkOutDate && maxGuests) {
+            const getRooms = async () => {
+                try {
+                    const payload = {
+                        ...(maxGuests > 0 && { maxGuests }),
+                        ...(selectedRoomType && { roomTypeId: selectedRoomType }),
+                        branchCode: AppEnvironment.BRANCH_CODE,
+                        statusId: 1,
+                    };
+
+                    console.log("PAYLOAD => ", payload);
+                    await fetchRoomList(payload);
+
+                } catch (error) {
+                    console.log(error);
+                }
+            };
             getRooms();
         }
-    }, [checkInDate, checkOutDate, selectedRoomType]);
+    }, [checkInDate, checkOutDate, maxGuests, selectedRoomType, fetchRoomList]);
 
     useEffect(() => {
+        const getAllRoomTypes = async () => {
+
+            try {
+                const result = await getRoomTypes();
+                console.log(
+                    "Room Types in Screen:",
+                    result?.result
+                )
+
+                if (result?.result) {
+                    setRoomTypes(result.result);
+                }
+
+            } catch (error) {
+
+                console.log(error);
+            }
+        };
         getAllRoomTypes();
     }, []);
-
-
-    const getRooms = async () => {
-        try {
-            const payload = {
-
-                ...(maxGuests > 0 && { maxGuests }),
-                ...(selectedRoomType && { roomTypeId: selectedRoomType }),
-                branchCode: AppEnvironment.BRANCH_CODE,
-                statusId: 1,
-            };
-
-            console.log("PAYLOAD => ", payload);
-            await fetchRoomList(payload);
-
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
-    const getAllRoomTypes = async () => {
-
-        try {
-            const result = await getRoomTypes();
-            console.log(
-                "Room Types in Screen:",
-                result?.result
-            )
-
-            if (result?.result) {
-                setRoomTypes(result.result);
-            }
-
-        } catch (error) {
-
-            console.log(error);
-        }
-    };
 
 
     const roomAvailable = {

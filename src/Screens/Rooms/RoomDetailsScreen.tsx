@@ -38,19 +38,17 @@ const RoomDetailsScreen = () => {
     const { roomDetails, loading, fetchRoomDetails, } = useBookingStore();
 
     useEffect(() => {
-        RoomDetails();
-    }, []);
-
-    const RoomDetails = async () => {
-        try {
-            console.log("Fetching Room Details for ID:", roomId);
-            const response = await fetchRoomDetails(roomId);
-            console.log("RoomDetails Response:", roomDetails,response);
-        } catch (error) {
-            console.log("RoomDetails Error:", error);
+        const RoomDetails = async () => {
+            try {
+                console.log("Fetching Room Details for ID:", roomId);
+                const response = await fetchRoomDetails(roomId);
+                console.log("RoomDetails Response:", roomDetails,response);
+            } catch (error) {
+                console.log("RoomDetails Error:", error);
         }
-    }
-
+        };
+        RoomDetails();
+    }, [roomId, fetchRoomDetails, roomDetails]);
 
     const room = roomDetails || {};
 
