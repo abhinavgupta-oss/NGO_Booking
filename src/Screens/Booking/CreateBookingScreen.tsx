@@ -44,8 +44,8 @@ const CreateBookingScreen = ({ route }) => {
         const getRoomDetails = async () => {
             try {
                 await fetchRoomDetails(roomId)
-            }catch(_error){
-               
+            }catch(error:any){
+            console.log("Event Details Error:", error);
             }
         }
         getRoomDetails()

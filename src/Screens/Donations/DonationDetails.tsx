@@ -39,8 +39,8 @@ const DonationDetails = ({ route, navigation }) => {
                 setpaymentDetails(URL)
                 setShowPaymentModal(true)
             }
-        } catch (_error: any) {
-
+        } catch (error: any) {
+            console.log(error);
         } finally {
             setLoading(false);
         }

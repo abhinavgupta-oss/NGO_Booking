@@ -87,7 +87,6 @@ const DashboardScreen = () => {
         },
     ];
 
-    // const [EventList, setEventList] = useState<any[]>([]);
     const { myProfile, loading, fetchMyprofile } = useProfileStore();
     const { eventList, fetchEventList } = useEventStore();
 
@@ -110,7 +109,7 @@ const DashboardScreen = () => {
                 setLiveEvents(liveResp?.result || []);
             }
             console.log("respList", respList)
-        } catch (error) {
+        } catch (error:any) {
             console.log("error", error);
         }
     };
