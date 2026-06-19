@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
     View,
     Text,
@@ -7,18 +7,15 @@ import {
     ScrollView,
     StatusBar,
     Image,
-    Pressable,
     BackHandler,
     ToastAndroid,
     Animated,
-    Dimensions,
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { Icons, Images } from "../../utility/utility";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { colors } from "../../utility/AppTheam";
 import { useProfileStore } from "../../Stores/useProfileStore";
 import CustomeLoading from "../../Component/Loading/CustomeLoading";
 import { useEventStore } from "../../Stores/useEventStore";
@@ -28,7 +25,7 @@ import { useTheme } from "../../utility/AppTheam/ThemeContext";
 
 
 const DashboardScreen = () => {
-    const { colors, darkMode, toggleTheme } = useTheme();
+    const { colors } = useTheme();
     const styles = createStyles(colors);
     const navigation = useNavigation();
     const [liveEvents, setLiveEvents] = useState<any[]>([]);
@@ -92,7 +89,31 @@ const DashboardScreen = () => {
 
     // const [EventList, setEventList] = useState<any[]>([]);
     const { myProfile, loading, fetchMyprofile } = useProfileStore();
-    const { eventList, loading: eventLoading, fetchEventList } = useEventStore();
+    const { eventList, fetchEventList } = useEventStore();
+
+    const fetchData = async () => {
+        try {
+            const resp = await fetchMyprofile();
+            console.log("resp", resp)
+
+            const eventPayload = {
+                "eventFilterTypeId": 1,
+                "pageNumber": 1,
+                "pageSize": 3,
+                "statusId": 2,
+            }
+
+            const respList = await fetchEventList(eventPayload);
+            const liveResp = await GetOngoingEvents();
+
+            if (liveResp?.status) {
+                setLiveEvents(liveResp?.result || []);
+            }
+            console.log("respList", respList)
+        } catch (error) {
+            console.log("error", error);
+        }
+    };
 
     useFocusEffect(
         useCallback(() => {
@@ -121,33 +142,8 @@ const DashboardScreen = () => {
             );
 
             return () => backHandler.remove();
-        }, [])
+        }, [fetchData])
     );
-
-    const fetchData = async () => {
-        try {
-            const resp = await fetchMyprofile();
-            console.log("resp", resp)
-
-            const eventPayload = {
-                "eventFilterTypeId": 1,
-                "pageNumber": 1,
-                "pageSize": 3,
-                "statusId": 2,
-            }
-
-            const respList = await fetchEventList(eventPayload);
-            const liveResp = await GetOngoingEvents();
-
-            if (liveResp?.status) {
-                setLiveEvents(liveResp?.result || []);
-            }
-            console.log("respList", respList)
-        } catch (error) {
-            console.log("error", error);
-        }
-    };
-
 
     const handelNavigate = async (id: any) => {
 

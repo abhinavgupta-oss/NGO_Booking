@@ -4,7 +4,6 @@ import {
     Text,
     StyleSheet,
     FlatList,
-    TouchableOpacity,
     Image,
     StatusBar,
 } from "react-native";
@@ -13,7 +12,6 @@ import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { colors } from "../../utility/AppTheam";
 import AppEnvironment from "../../utility/AppEnvironment";
 import CommonHeader from "../../Component/Header/CommonHeader";
 import CustomeLoading from "../../Component/Loading/CustomeLoading";
@@ -38,14 +36,14 @@ interface EventItem {
 }
 
 const DonationListScreen = () => {
-    const { colors, darkMode, toggleTheme } = useTheme();
+    const { colors } = useTheme();
     const styles = createStyles(colors); 
     const navigation: any = useNavigation();
     const { donationList, loading, fetchDonationList } = useDonationStore();
 
     useEffect(() => {
         fetchEventList();
-    }, []);
+    }, [fetchDonationList]);
 
     const fetchEventList = async () => {
         try {

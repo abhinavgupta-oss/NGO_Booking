@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
+import React, { useRef } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActivityIndicator, BackHandler, Platform, View } from 'react-native';
 import SplashScreen from '../Screens/UtilityScreens/SplashScreen';
 import UpdateScreen from '../Screens/UtilityScreens/UpdateScreen';
 import LoginScreen from '../Screens/UserAuth/LogIn/LoginScreen';
@@ -11,7 +9,6 @@ import DonationDetails from '../Screens/Donations/DonationDetails';
 import DonationPenDetails from '../Screens/Donations/DonationPenDetails';
 import EventDetailsScreen from '../Screens/Events/EventDetailsScreen';
 import EventListScreens from '../Screens/Events/EventListScreens';
-import MyProfileScreen from '../Screens/Profile/MyProfileScreen';
 import DevoteeReceiptScreen from '../Screens/Donations/DevoteeReceiptScreen';
 import MyDonationScreen from '../Screens/Profile/myInfoDetails/MyDonationScreen';
 import RegisterScreen from '../Screens/UserAuth/Registration/RegisterScreen';

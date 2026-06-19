@@ -1,20 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
     View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
     Modal,
-    TextInput,
-    ScrollView,
-    ActivityIndicator,
+    StyleSheet,
 } from "react-native";
 
-import MaterialIcons from "@react-native-vector-icons/material-icons";
-import CustomInput from "../../Component/formComponent/CustomInput";
-import { DonationPayment, DonationPaymentVerify } from "../../Services/Donation/DonationService";
-import { useNavigation } from "@react-navigation/native";
 import WebView from "react-native-webview";
+import { useNavigation } from "@react-navigation/native";
 import { useToast } from "../../Component/Toast/ToastContext";
 import { BookingPaymentUpdate } from "../../Services/Booking/BookingService";
 
@@ -26,12 +18,12 @@ interface Props {
 
 const WebViewModel = ({
     visible,
-    onClose,
+    _onClose,
     Details,
 }: Props) => {
     const { showToast } = useToast();
     const navigation = useNavigation();
-    const [loading, setLoading] = useState(true);
+    const [_loading, setLoading] = useState(true);
     const paymentHandled = useRef(false);
 
     const PayUrl = Details?.paymentUrl

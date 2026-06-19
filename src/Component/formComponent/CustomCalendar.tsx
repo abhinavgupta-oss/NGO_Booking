@@ -63,10 +63,6 @@ const CustomCalendar = ({
   endDate,
   onRangeSelect,
 }: CustomCalendarProps) => {
-  if (!visible) {
-    return null;
-  }
-
   const today = new Date();
   const initialDate = startDate || selectedDate || today;
 
@@ -90,13 +86,6 @@ const CustomCalendar = ({
 
   const [showPicker, setShowPicker] = useState(false);
 
-  const formattedDate = `${selectedFullDate
-    .getDate()
-    .toString()
-    .padStart(2, '0')}/${(selectedFullDate.getMonth() + 1)
-      .toString()
-      .padStart(2, '0')}/${selectedFullDate.getFullYear()}`;
-
   const daysInMonth = useMemo(() => {
     return new Date(currentYear, currentMonth + 1, 0).getDate();
   }, [currentMonth, currentYear]);
@@ -118,6 +107,10 @@ const CustomCalendar = ({
 
     return days;
   }, [firstDay, daysInMonth]);
+
+  if (!visible) {
+    return null;
+  }
 
   const normalizeDate = (date: Date) =>
     new Date(date.getFullYear(), date.getMonth(), date.getDate());

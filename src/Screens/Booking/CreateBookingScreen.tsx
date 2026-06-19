@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useProfileStore } from "../../Stores/useProfileStore";
 
 import {
     View,
@@ -7,21 +6,16 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    TextInput,
     Image,
     StatusBar,
 } from "react-native";
 
 import {
-    useRoute,
     useNavigation
 } from "@react-navigation/native";
 
-import LinearGradient from "react-native-linear-gradient";
-
-import MaterialIcons from "@react-native-vector-icons/material-icons";
-
 import { colors } from "../../utility/AppTheam";
+import MaterialIcons from "@react-native-vector-icons/material-icons";
 import CommonHeader from "../../Component/Header/CommonHeader";
 import { Images } from "../../utility/utility";
 import { useBookingStore } from "../../Stores/useBookingStore";
@@ -41,22 +35,21 @@ const CreateBookingScreen = ({ route }) => {
     const [loadings, setLoadings] = useState(false);
     const [comment, setComment] = useState("");
 
-    const { roomDetails, loading, fetchRoomDetails, } = useBookingStore();
+    const { roomDetails, fetchRoomDetails, } = useBookingStore();
 
     console.log("ROUTE PARAMS", bookingData);
     console.log("roomId",roomId)
 
     useEffect(() => {
-        getRoomDetails()
-    }, [])
-
-    const getRoomDetails = async () => {
-        try {
-            const resp = fetchRoomDetails(roomId)
-        }catch(error:any){
-           
+        const getRoomDetails = async () => {
+            try {
+                await fetchRoomDetails(roomId)
+            }catch(_error){
+               
+            }
         }
-    }
+        getRoomDetails()
+    }, [roomId, fetchRoomDetails])
 
     // ================= PAYMENT =================
 

@@ -7,7 +7,7 @@ import {
     Dimensions,
     Image,
 } from 'react-native';
-import { Icons, icons } from '../../utility/utility';
+import { Icons } from '../../utility/utility';
 
 const { width } = Dimensions.get('window');
 
@@ -39,7 +39,7 @@ const CustomToast: React.FC<Props> = ({ visible, type, message, onHide }) => {
                 }, 2000);
             });
         }
-    }, [visible]);
+    }, [visible, fadeAnim, onHide]);
 
     if (!visible) return null;
 

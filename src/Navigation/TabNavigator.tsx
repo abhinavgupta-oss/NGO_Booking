@@ -3,39 +3,22 @@ import {
     TouchableOpacity,
     View,
     StyleSheet,
-    Pressable,
 } from "react-native";
 
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 
 import DashboardScreen from "../Screens/Dashboard/DashboardScreen";
-import EventListScreens from "../Screens/Events/EventListScreens";
 import DonationListScreen from "../Screens/Donations/DonationListScreen";
 import MyProfileScreen from "../Screens/Profile/MyProfileScreen";
-import MyBookingScreen from "../Screens/Profile/myInfoDetails/MyBookingScreen";
 import RoomAvailableScreen from "../Screens/Rooms/RoomAvailableScreen";
 import { useTheme } from "../utility/AppTheam/ThemeContext";
 
 
 const Tab = createBottomTabNavigator();
 
-function AddButton({ children, onPress }: any) {
-    return (
-        <TouchableOpacity
-            style={styles.addButtonContainer}
-            activeOpacity={1}
-            onPress={onPress}
-        >
-            <View style={styles.addButton}>
-                {children}
-            </View>
-        </TouchableOpacity>
-    );
-}
-
 export default function TabNavigator() {
-    const { colors, darkMode, toggleTheme } = useTheme();
+    const { colors } = useTheme();
     const styles = createStyles(colors);
     return (
         <Tab.Navigator
@@ -48,11 +31,9 @@ export default function TabNavigator() {
                 tabBarActiveTintColor: "#ED7723",
                 tabBarInactiveTintColor: "#7A7A7A",
 
-                // REMOVE TAB PRESS SHADOW / RIPPLE
                 tabBarButton: (props) => (
-                    <Pressable
+                    <TouchableOpacity
                         {...props}
-                        android_ripple={null}
                         style={[props.style, styles.tabButton]}
                     />
                 ),
@@ -63,7 +44,7 @@ export default function TabNavigator() {
                 name="Home"
                 component={DashboardScreen}
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
+                    tabBarIcon: ({ focused, _color }) => (
                         <MaterialIcons
                             name="home-filled"
                             size={30}
@@ -78,7 +59,7 @@ export default function TabNavigator() {
                 name="Booking"
                 component={RoomAvailableScreen}
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
+                    tabBarIcon: ({ focused, _color }) => (
                         <MaterialIcons
                             name="calendar-month"
                             size={30}
@@ -93,7 +74,7 @@ export default function TabNavigator() {
                 name="Donation"
                 component={DonationListScreen}
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
+                    tabBarIcon: ({ focused, _color }) => (
                         <MaterialIcons
                             name="volunteer-activism"
                             size={30}
@@ -108,7 +89,7 @@ export default function TabNavigator() {
                 name="Profile"
                 component={MyProfileScreen}
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
+                    tabBarIcon: ({ focused, _color }) => (
                         <MaterialIcons
                             name="person"
                             size={30}

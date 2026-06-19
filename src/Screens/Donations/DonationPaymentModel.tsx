@@ -1,13 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import {
     View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
     Modal,
-    TextInput,
-    ScrollView,
-    ActivityIndicator,
+    StyleSheet,
 } from "react-native";
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
@@ -30,7 +25,7 @@ const DonationPaymentModel = ({
 }: Props) => {
     const { showToast } = useToast();
     const navigation = useNavigation();
-    const [loading, setLoading] = useState(true);
+    const [_loading, setLoading] = useState(true);
     const paymentHandled = useRef(false);
 
     const PayUrl = Details?.paymentUrl

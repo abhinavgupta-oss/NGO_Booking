@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 
 import {
   View,
@@ -50,17 +50,10 @@ const CustomPicker = ({
   onClose,
 }: CustomPickerProps) => {
 
-  const [selectedText, setSelectedText] =
-    useState("");
-
   const handleSelect = (
     item: PickerItem,
   ) => {
-
-    setSelectedText(item[displayKey]);
-
     onSelect(item[valueKey], item);
-
     onClose();
   };
 

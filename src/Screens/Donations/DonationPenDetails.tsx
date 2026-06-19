@@ -136,7 +136,7 @@ const DonationPenDetails = ({ route }) => {
 
             setShowCityDropdown(true);
 
-        } catch (error) {
+        } catch (_error) {
 
             console.log(
                 "CITY ERROR",

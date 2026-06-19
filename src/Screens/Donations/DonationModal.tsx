@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
     View,
     Text,
@@ -35,9 +35,9 @@ const DonationModal = ({
     const [donationAmount, setDonationAmount] = useState(
         Details?.defaultAmount?.toString() || " "
     );
-    const { myProfile, fetchMyprofile } = useProfileStore();
-    const [name, setName] = useState(myProfile?.fullName || "");
-    const [mobile, setMobile] = useState(myProfile?.mobile || "");
+    const { myProfile } = useProfileStore();
+    const [_name, setName] = useState(myProfile?.fullName || "");
+    const [_mobile, setMobile] = useState(myProfile?.mobile || "");
 
     const [nameError, setNameError] = useState("");
     const [mobileError, setMobileError] = useState("");

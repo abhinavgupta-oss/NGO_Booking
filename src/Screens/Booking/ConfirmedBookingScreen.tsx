@@ -1,14 +1,11 @@
 import {
-    ScrollView, StatusBar, TextInput,
-    Image, StyleSheet, Text, TouchableOpacity, View
+    StatusBar, Image, StyleSheet, Text, TouchableOpacity, View
 } from "react-native";
 import { colors } from "../../utility/AppTheam";
 import {
-    useRoute,
     useNavigation
 } from "@react-navigation/native";
 import { Images } from "../../utility/utility";
-import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
 import CommonHeader from "../../Component/Header/CommonHeader";
 
