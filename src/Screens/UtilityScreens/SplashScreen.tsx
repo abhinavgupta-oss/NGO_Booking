@@ -24,39 +24,38 @@ const SplashScreen = () => {
     // const [deviceBuild, setDeviceBuild] = useState('');
 
     useEffect(() => {
-        const checkLogin = async () => {
-            try {
-                const timer = setTimeout(async () => {
-                    const isLoggedIn = await isUserLoggedIn();
-                    console.log("isLoggedIn", isLoggedIn)
-                    const getTokenresp = await getAccessToken()
-                    console.log("getTokenresp", getTokenresp)
-                    const appDetails = await getAppdetails()
-                    console.log("appDetails", appDetails)
-                    const currentApp = DeviceInfo.getVersion();
-                    console.log("currentApp", currentApp)
-                    if (appDetails?.versionName > currentApp) {
-                        navigation.replace("Update",{latest:appDetails})
-                    }
-                    else {
-                        if (isLoggedIn) {
-                            navigation.replace("Dashboard");
-                        } else {
-                            navigation.replace("Login");
-                        }
-                    }
-
-                }, 3000);
-
-                return () => clearTimeout(timer);
-            } catch (error) {
-                console.log("Login Check Error:", error);
-            }
-        };
-
         checkLogin();
     }, []);
+    
+    const checkLogin = async () => {
+        try {
+            const timer = setTimeout(async () => {
+                const isLoggedIn = await isUserLoggedIn();
+                console.log("isLoggedIn", isLoggedIn)
+                const getTokenresp = await getAccessToken()
+                console.log("getTokenresp", getTokenresp)
+                const appDetails = await getAppdetails()
+                console.log("appDetails", appDetails)
+                const currentApp = DeviceInfo.getVersion();
+                console.log("currentApp", currentApp)
+                if (appDetails?.versionName > currentApp) {
+                    navigation.replace("Update", { latest: appDetails })
+                }
+                else {
+                    if (isLoggedIn) {
+                        navigation.replace("Dashboard");
+                    } else {
+                        navigation.replace("Login");
+                    }
+                }
 
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        } catch (error) {
+            console.log("Login Check Error:", error);
+        }
+    };
 
     return (
         <ImageBackground
