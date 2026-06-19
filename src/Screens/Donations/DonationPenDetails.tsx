@@ -1,3 +1,5 @@
+// src/screens/DonationPenDetails.tsx
+
 import React, { useState } from "react";
 
 import {
@@ -20,8 +22,10 @@ import CustomInput from "../../Component/formComponent/CustomInput";
 
 import CustomCalendar from "../../Component/formComponent/CustomCalendar";
 import { GetCityList } from "../../Services/Utils/UtilsService";
+import CustomPicker from "../../Component/formComponent/CustomPicker";
 import { useNavigation } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
+import CustomButton from "../../Component/formComponent/CustomButton";
 
 const DonationPenDetails = ({ route }) => {
 
@@ -132,7 +136,7 @@ const DonationPenDetails = ({ route }) => {
 
             setShowCityDropdown(true);
 
-        } catch (error:any){
+        } catch (error) {
 
             console.log(
                 "CITY ERROR",
@@ -243,12 +247,22 @@ const DonationPenDetails = ({ route }) => {
     const handelSkipDetails = async () => {
         try {
             const respInvoice = await DevoteeInVoiceDetails(paymentId)
-            navigation.replace("DevoteeReceipt",{ InvoiceDetails: respInvoice?.result })
+            navigation.replace("DevoteeReceipt", { InvoiceDetails: respInvoice?.result })
 
         } catch (error: any) {
-            console.log(error);
+
         }
     }
+    const parseDate = (dateStr: string) => {
+        const [dd, mm, yyyy] = dateStr.split('/');
+
+        return new Date(
+            Number(yyyy),
+            Number(mm) - 1,
+            Number(dd),
+        );
+    };
+
 
     return (
         <View style={styles.container}>
@@ -338,10 +352,9 @@ const DonationPenDetails = ({ route }) => {
                                 placeholder="Type 3+ chars..."
                                 value={city}
                                 onChangeText={handleCitySearch}
-                                style={styles.input}
                                 placeholderTextColor="#999"
+                                icon="apartment"
                             />
-
                             {showCityDropdown && (
                                 <Modal visible={showCityDropdown} transparent>
                                     <View style={styles.overlay}>
@@ -361,7 +374,6 @@ const DonationPenDetails = ({ route }) => {
                                                 placeholder="Type 3+ chars..."
                                                 value={city}
                                                 onChangeText={handleCitySearch}
-                                                style={styles.input}
                                                 placeholderTextColor="#999"
                                             />
                                             <FlatList
@@ -411,7 +423,7 @@ const DonationPenDetails = ({ route }) => {
                                                     cityLoading ? (
                                                         <ActivityIndicator
                                                             size="small"
-                                                            color= {colors.primary}
+                                                            color={colors.primary}
                                                             style={{
                                                                 marginVertical: 10,
                                                             }}
@@ -446,8 +458,8 @@ const DonationPenDetails = ({ route }) => {
                             }
                             maxLength={6}
                             keyboardType="number-pad"
-                            style={styles.input}
                             placeholderTextColor="#999"
+                            icon="home"
                         />
                     </View>
                 </View>
@@ -474,8 +486,8 @@ const DonationPenDetails = ({ route }) => {
                             onChangeText={
                                 setAddress
                             }
-                            style={styles.input}
                             placeholderTextColor="#999"
+                            icon="home"
                         />
 
                     </View>
@@ -508,8 +520,8 @@ const DonationPenDetails = ({ route }) => {
                                 )
                             }
                             maxLength={10}
-                            style={styles.input}
                             placeholderTextColor="#999"
+                            icon="badge"
                         />
 
                     </View>
@@ -542,7 +554,11 @@ const DonationPenDetails = ({ route }) => {
                                 )
                             }
                         >
-
+                            <MaterialIcons
+                                name="calendar-month"
+                                size={22}
+                                color="#9CA3AF"
+                            />
                             <Text
                                 style={[
                                     styles.dateText,
@@ -556,11 +572,6 @@ const DonationPenDetails = ({ route }) => {
                                     "DD/MM/YYYY"}
                             </Text>
 
-                            <MaterialIcons
-                                name="calendar-month"
-                                size={22}
-                                color="#000"
-                            />
 
                         </TouchableOpacity>
 
@@ -589,6 +600,11 @@ const DonationPenDetails = ({ route }) => {
                             }
                         >
 
+                            <MaterialIcons
+                                name="calendar-month"
+                                size={22}
+                                color="#9CA3AF"
+                            />
                             <Text
                                 style={[
                                     styles.dateText,
@@ -602,11 +618,6 @@ const DonationPenDetails = ({ route }) => {
                                     "DD/MM/YYYY"}
                             </Text>
 
-                            <MaterialIcons
-                                name="calendar-month"
-                                size={22}
-                                color="#000"
-                            />
 
                         </TouchableOpacity>
 
@@ -618,7 +629,7 @@ const DonationPenDetails = ({ route }) => {
 
                 <View style={styles.buttonRow}>
 
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={
                             styles.saveButton
                         }
@@ -641,7 +652,14 @@ const DonationPenDetails = ({ route }) => {
                             Save
                         </Text>
 
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
+
+                    <CustomButton
+                        title="Save"
+                        onPress={handelSaveDetails}
+                        buttonStyle={styles.saveButton}
+
+                    />
 
                     <TouchableOpacity
                         style={
@@ -668,6 +686,7 @@ const DonationPenDetails = ({ route }) => {
 
             <CustomCalendar
                 visible={showBirthPicker}
+                selectedDate={birthDate ? parseDate(birthDate) : parseDate("1/1/2001")}
                 maxDate={new Date()}
                 onDateSelect={date => {
                     setBirthDate(date);
@@ -714,17 +733,14 @@ const styles = StyleSheet.create({
     },
 
     formRow: {
-        flexDirection: "row",
+        flexDirection: "column",
         justifyContent: "space-between",
-        marginBottom: 18,
-
         overflow: "visible",
     },
 
     inputWrapper: {
-        width: "48%",
+        width: "95%",
         position: "relative",
-
         overflow: "visible",
     },
 
@@ -865,10 +881,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
+
     },
 
     dateText: {
+        marginLeft: 15,
         fontSize: 16,
         color: "#000",
     },
@@ -882,11 +899,6 @@ const styles = StyleSheet.create({
     saveButton: {
         width: "48%",
         height: 56,
-        borderRadius: 14,
-        backgroundColor: "#FF7A00",
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
     },
 
     saveText: {
@@ -898,7 +910,7 @@ const styles = StyleSheet.create({
 
     skipButton: {
         width: "48%",
-        height: 56,
+        height: 45,
         borderRadius: 14,
         backgroundColor: "#ECECEC",
         flexDirection: "row",

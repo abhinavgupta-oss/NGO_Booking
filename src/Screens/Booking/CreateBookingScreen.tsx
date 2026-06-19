@@ -22,146 +22,88 @@ import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 
 import { colors } from "../../utility/AppTheam";
+import CommonHeader from "../../Component/Header/CommonHeader";
+import { Images } from "../../utility/utility";
+import { useBookingStore } from "../../Stores/useBookingStore";
+import CustomInput from "../../Component/formComponent/CustomInput";
+import { RoomBookingRequest } from "../../Services/Booking/BookingService";
+import CustomeLoading from "../../Component/Loading/CustomeLoading";
 
 
-const CreateBookingScreen = () => {
+const CreateBookingScreen = ({ route }) => {
 
     const navigation = useNavigation();
-    const route = useRoute();
-    const profile = useProfileStore(
-        (state) => state.profile
-    );
-    const [guestDetails, setGuestDetails] = useState([
-        {
-            fullName: profile?.fullName || "",
-            mobile:
-                profile?.mobileNumber ||
-                profile?.phoneNumber ||
-                profile?.mobile ||
-                "",
-            email: profile?.email || "",
-            document: null,
-            isPrimary: true,
+
+    const { bookingData } = route.params || {};
+    const {roomId} = route.params || {};
+
+    const [showComment, setShowComment] = useState(false);
+    const [loadings, setLoadings] = useState(false);
+    const [comment, setComment] = useState("");
+
+    const { roomDetails, loading, fetchRoomDetails, } = useBookingStore();
+
+    console.log("ROUTE PARAMS", bookingData);
+    console.log("roomId",roomId)
+
+    useEffect(() => {
+        getRoomDetails()
+    }, [])
+
+    const getRoomDetails = async () => {
+        try {
+            const resp = fetchRoomDetails(roomId)
+        }catch(error:any){
+           
         }
-    ]);
-    // ================= RECEIVED DATA =================
-
-    const bookingData = route?.params?.bookingData || {};
-
-    const {
-        room,
-        checkIn,
-        checkOut,
-        guests,
-    } = bookingData;
+    }
 
     // ================= PAYMENT =================
 
-    const [paymentType, setPaymentType] = useState("partial");
+    const [paymentType, setPaymentType] = useState("full");
 
-    const roomPrice = parseFloat(
-        String(room?.price || 1200).replace(/[^0-9.]/g, "")
-    );
-
-    const serviceFee = 150;
-    const donation = 100;
-
-    const totalAmount =
-        Number(roomPrice) + serviceFee + donation;
-
-    const partialAmount = 500;
-
-    const remainingAmount =
-        totalAmount - partialAmount;
-
-    const handleGuestChange = (index, field, value) => {
-
-        const updatedGuests = [...guestDetails];
-
-        updatedGuests[index][field] = value;
-
-        setGuestDetails(updatedGuests);
-    };
-
-    const addGuest = () => {
-
-        if (guestDetails.length >= guests) {
-            return;
+    const handleBookNow = async (amount) => {
+        try {
+            setLoadings(true)
+            const bookingPayload = {
+                "roomId": roomDetails?.id,
+                "checkInDate": bookingData?.checkIn,
+                "checkOutDate": bookingData?.checkOut,
+                "totalGuests": bookingData?.guests,
+                "specialRequest": "asdfghjk",
+                "amountReceived": amount,
+                "isActive": true,
+            }
+            console.log("BOOKING DATA", bookingPayload);
+            const resp = await RoomBookingRequest(bookingPayload)
+            console.log("BOOKING DATA", resp?.result);
+            const paymentUrl = resp?.result
+            console.log("paymentUrl", paymentUrl)
+            navigation.replace("OnlinePayment", { paymentUrl: paymentUrl })
+        } catch (error: any) {
+            console.log(error.customMessage)
+        }finally{
+            setLoadings(false)
         }
 
-        setGuestDetails([
-            ...guestDetails,
-            {
-                fullName: "",
-                mobile: "",
-                isPrimary: false,
-            },
-        ]);
+
     };
 
-    const removeGuest = (index) => {
-
-        const updatedGuests =
-            guestDetails.filter(
-                (_, i) => i !== index
-            );
-
-        setGuestDetails(updatedGuests);
+    const handeldiscountPercentage = (discount: number) => {
+        const serviceFee = Number(roomDetails?.totalPrice || 0);
+        return (serviceFee * discount) / 100;
     };
 
-    const handleBookNow = () => {
+    const onSitePay = () => {
+        const payable =
+            Number(roomDetails?.finalPrice || 0) +
+            Number(roomDetails?.serviceFee || 0);
 
-        const bookingPayload = {
-            room,
-            guests,
-            guestDetails,
-            checkIn,
-            checkOut,
-            paymentType,
-            payableAmount:
-                paymentType === "partial"
-                    ? partialAmount
-                    : totalAmount,
-        };
-
-        console.log("BOOKING DATA", bookingPayload);
-
-        navigation.navigate(
-            "ConfirmedBookingScreen",
-            {
-                bookingData: bookingPayload
-            }
+        return Math.round(
+            (payable * Number(roomDetails?.tokenPercentage || 0)) / 100
         );
     };
 
-    useEffect(() => {
-
-        if (profile) {
-
-            setGuestDetails([
-                {
-                    fullName:
-                        profile?.fullName || "",
-
-                    mobile:
-                        profile?.mobileNumber ||
-                        profile?.phoneNumber ||
-                        profile?.mobile ||
-                        "",
-
-                    email:
-                        profile?.email || "",
-
-                    document: null,
-
-                    isPrimary: true,
-                }
-            ]);
-        }
-
-    }, [profile]);
-
-    console.log("PROFILE DATA", profile);
 
     return (
 
@@ -174,31 +116,7 @@ const CreateBookingScreen = () => {
 
             {/* ================= HEADER ================= */}
 
-            <LinearGradient
-                colors={[colors.primary, "#F59E0B"]}
-                style={styles.header}
-            >
-
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => navigation.goBack()}
-                    style={styles.backBtn}
-                >
-                    <MaterialIcons
-                        name="arrow-back"
-                        size={24}
-                        color="#FFF"
-                    />
-                </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>
-                    Complete Booking
-                </Text>
-
-                {/* Empty view for perfect center alignment */}
-                <View style={{ width: 42 }} />
-
-            </LinearGradient>
+            <CommonHeader title="Complete Booking" />
 
             {/* ================= BODY ================= */}
 
@@ -217,26 +135,22 @@ const CreateBookingScreen = () => {
                     <View style={styles.roomTopRow}>
 
                         <Image
-                            source={
-                                room?.images?.[0]
-                                    ? { uri: room.images[0] }
-                                    : { uri: profile?.branchLogo }
-                            }
+                            source={bookingData?.roomImage ? { uri: bookingData?.roomImage } : Images.login}
                             style={styles.roomImage}
                         />
 
                         <View style={styles.roomContent}>
 
                             <Text style={styles.roomName}>
-                                {room?.roomName || "Deluxe Room"}
+                                {bookingData?.roomTypeName || "Deluxe Room"}
                             </Text>
 
                             <Text style={styles.roomLocation}>
-                                {room?.location || "Main Building"}
+                                {bookingData?.roomNumber || "Main Building"}
                             </Text>
 
                             <Text style={styles.roomPrice}>
-                                {roomPrice}
+                                ₹ {roomDetails?.totalPrice} /Night
 
                                 <Text style={styles.night}>
                                     {" "}
@@ -262,7 +176,7 @@ const CreateBookingScreen = () => {
                             </Text>
 
                             <Text style={styles.dateValue}>
-                                {checkIn}
+                                {bookingData?.checkIn}
                             </Text>
                         </View>
 
@@ -278,7 +192,7 @@ const CreateBookingScreen = () => {
                             </Text>
 
                             <Text style={styles.dateValue}>
-                                {checkOut}
+                                {bookingData?.checkOut}
                             </Text>
                         </View>
 
@@ -294,7 +208,7 @@ const CreateBookingScreen = () => {
                             </Text>
 
                             <Text style={styles.dateValue}>
-                                {guests} Guests
+                                {bookingData?.guests} Guests
                             </Text>
                         </View>
 
@@ -306,7 +220,7 @@ const CreateBookingScreen = () => {
 
                 {/* ================= GUEST DETAILS ================= */}
 
-                <View style={styles.section}>
+                {/* <View style={styles.section}>
 
                     <Text style={styles.sectionTitle}>
                         Guest Details
@@ -357,7 +271,7 @@ const CreateBookingScreen = () => {
 
                                 </View>
 
-                                {/* FULL NAME */}
+                            
                                 <TextInput
                                     placeholder="Full Name"
                                     placeholderTextColor="#999"
@@ -372,7 +286,7 @@ const CreateBookingScreen = () => {
                                     }
                                 />
 
-                                {/* MOBILE */}
+                                
                                 <TextInput
                                     placeholder="Mobile Number"
                                     placeholderTextColor="#999" editable={!guest.isPrimary}
@@ -388,7 +302,7 @@ const CreateBookingScreen = () => {
                                     }
                                 />
 
-                                {/* PRIMARY GUEST ONLY */}
+                               
                                 {
                                     guest?.isPrimary && (
                                         <>
@@ -407,7 +321,7 @@ const CreateBookingScreen = () => {
                                                 }
                                             />
 
-                                            {/* DOCUMENT PICKER */}
+                                            
                                             <TouchableOpacity
                                                 style={styles.uploadBtn}
                                             >
@@ -429,10 +343,10 @@ const CreateBookingScreen = () => {
                         ))
                     }
 
-                    {/* ================= ADD GUEST ================= */}
+                    
 
                     {
-                        guestDetails.length < guests && (
+                        guestDetails.length < (bookingData?.MaxGuests || 1) && (
 
                             <TouchableOpacity
                                 style={styles.addGuestBtn}
@@ -453,26 +367,125 @@ const CreateBookingScreen = () => {
                         )
                     }
 
-                </View>
+                </View> */}
 
-                {/* ================= ARRIVAL ================= */}
+                {/* ================= PRICE DETAILS ================= */}
 
                 <View style={styles.section}>
 
                     <Text style={styles.sectionTitle}>
-                        Additional Information
+                        Price Details
                     </Text>
 
-                    <TextInput
-                        placeholder="Special Request (Optional)"
-                        placeholderTextColor="#999"
-                        multiline
-                        style={[
-                            styles.input,
-                            { height: 90 }
-                        ]}
-                    />
+                    <View style={styles.priceRow}>
 
+                        <Text style={styles.priceLabel}>
+                            Room Charges
+                        </Text>
+
+                        <Text style={styles.priceValue}>
+                            ₹{roomDetails?.totalPrice}
+                        </Text>
+
+                    </View>
+
+                    {roomDetails?.discountPercentage && (
+                        <View style={styles.priceRow}>
+
+                            <Text style={styles.priceLabel}>
+                                Discount(% {roomDetails?.discountPercentage})
+                            </Text>
+
+                            <Text style={styles.priceValue}>
+                                {handeldiscountPercentage(roomDetails?.discountPercentage)}
+                            </Text>
+
+                        </View>
+                    )}
+                    {roomDetails?.flatDiscount && (
+                        <View style={styles.priceRow}>
+
+                            <Text style={styles.priceLabel}>
+                                Discount
+                            </Text>
+
+                            <Text style={styles.priceValue}>
+                                ₹{roomDetails?.flatDiscount}
+                            </Text>
+
+                        </View>
+                    )}
+
+                    {roomDetails?.serviceFee && (
+                        <View style={styles.priceRow}>
+
+                            <Text style={styles.priceLabel}>
+                                Service Fee
+                            </Text>
+
+                            <Text style={styles.priceValue}>
+                                ₹{roomDetails?.serviceFee}
+                            </Text>
+
+                        </View>
+                    )}
+
+                    <View style={styles.divider} />
+
+                    <View style={styles.priceRow}>
+
+                        <Text style={styles.totalLabel}>
+                            Total Amount
+                        </Text>
+
+                        <Text style={styles.totalValue}>
+                            ₹{roomDetails?.finalPrice}
+                        </Text>
+
+                    </View>
+
+                </View>
+
+
+                {/* ================= ARRIVAL ================= */}
+
+                <View style={styles.section}>
+                    <TouchableOpacity
+                        style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                        }}
+                        onPress={() => setShowComment(!showComment)}
+                    >
+                        <Text style={styles.sectionTitle}>
+                            Additional Requirement
+                        </Text>
+
+                        <MaterialIcons
+                            name={showComment ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+                            size={24}
+                            color="#000"
+                        />
+                    </TouchableOpacity>
+
+                    {showComment && (
+                        <CustomInput
+                            placeholder="Speacel Requirement (Optional)"
+                            value={comment}
+                            onChangeText={setComment}
+                        // editable={false}
+                        />
+                    )}
+                </View>
+
+                {/* =================  IMPORTANT INFORMATION ================= */}
+
+
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>
+                        Important Information
+                    </Text>
                     <View style={styles.infoContainer}>
 
                         <View style={styles.infoRow}>
@@ -528,7 +541,6 @@ const CreateBookingScreen = () => {
                         }
 
                     </View>
-
                 </View>
 
                 {/* ================= PAYMENT OPTIONS ================= */}
@@ -538,8 +550,6 @@ const CreateBookingScreen = () => {
                     <Text style={styles.sectionTitle}>
                         Payment Options
                     </Text>
-
-                    {/* ================= FULL PAYMENT ================= */}
 
                     <TouchableOpacity
                         activeOpacity={0.9}
@@ -575,119 +585,59 @@ const CreateBookingScreen = () => {
                         </View>
 
                         <Text style={styles.paymentAmount}>
-                            ₹{totalAmount}
+                            ₹{roomDetails?.finalPrice}
                         </Text>
 
                     </TouchableOpacity>
 
-                    {/* ================= PARTIAL PAYMENT ================= */}
-
-                    <TouchableOpacity
-                        activeOpacity={0.9}
-                        style={[
-                            styles.paymentCard,
-                            paymentType === "partial"
-                            &&
-                            styles.activeCard
-                        ]}
-                        onPress={() =>
-                            setPaymentType("partial")
-                        }
-                    >
-
-                        <View style={styles.radioOuter}>
-                            {
+                    {roomDetails?.tokenPercentage && (
+                        <TouchableOpacity
+                            activeOpacity={0.9}
+                            style={[
+                                styles.paymentCard,
                                 paymentType === "partial"
                                 &&
-                                <View style={styles.radioInner} />
+                                styles.activeCard
+                            ]}
+                            onPress={() =>
+                                setPaymentType("partial")
                             }
-                        </View>
+                        >
 
-                        <View style={{ flex: 1 }}>
+                            <View style={styles.radioOuter}>
+                                {
+                                    paymentType === "partial"
+                                    &&
+                                    <View style={styles.radioInner} />
+                                }
+                            </View>
 
-                            <Text style={styles.paymentTitle}>
-                                Reserve Now
+                            <View style={{ flex: 1 }}>
+
+                                <Text style={styles.paymentTitle}>
+                                    Reserve Now
+                                </Text>
+
+                                <Text style={styles.paymentSubtitle}>
+                                    Pay remaining at hotel check-in
+                                </Text>
+
+                                <Text style={styles.remainingText}>
+                                    Remaining ₹{roomDetails?.finalPrice - onSitePay()} at hotel
+                                </Text>
+
+                            </View>
+
+                            <Text style={styles.paymentAmount}>
+                                ₹{onSitePay()}
                             </Text>
 
-                            <Text style={styles.paymentSubtitle}>
-                                Pay remaining at hotel check-in
-                            </Text>
-
-                            <Text style={styles.remainingText}>
-                                Remaining ₹{remainingAmount} at hotel
-                            </Text>
-
-                        </View>
-
-                        <Text style={styles.paymentAmount}>
-                            ₹{partialAmount}
-                        </Text>
-
-                    </TouchableOpacity>
-
+                        </TouchableOpacity>
+                    )}
                 </View>
-
-                {/* ================= PRICE DETAILS ================= */}
-
-                <View style={styles.section}>
-
-                    <Text style={styles.sectionTitle}>
-                        Price Details
-                    </Text>
-
-                    <View style={styles.priceRow}>
-
-                        <Text style={styles.priceLabel}>
-                            Room Charges
-                        </Text>
-
-                        <Text style={styles.priceValue}>
-                            ₹{roomPrice}
-                        </Text>
-
-                    </View>
-
-                    <View style={styles.priceRow}>
-
-                        <Text style={styles.priceLabel}>
-                            Service Fee
-                        </Text>
-
-                        <Text style={styles.priceValue}>
-                            ₹{serviceFee}
-                        </Text>
-
-                    </View>
-
-                    <View style={styles.priceRow}>
-
-                        <Text style={styles.priceLabel}>
-                            Donation
-                        </Text>
-
-                        <Text style={styles.priceValue}>
-                            ₹{donation}
-                        </Text>
-
-                    </View>
-
-                    <View style={styles.divider} />
-
-                    <View style={styles.priceRow}>
-
-                        <Text style={styles.totalLabel}>
-                            Total Amount
-                        </Text>
-
-                        <Text style={styles.totalValue}>
-                            ₹{totalAmount}
-                        </Text>
-
-                    </View>
-
-                </View>
-
             </ScrollView>
+            <CustomeLoading isLoading={loadings} />
+
 
             {/* ================= BOTTOM BUTTON ================= */}
 
@@ -696,20 +646,26 @@ const CreateBookingScreen = () => {
                 <TouchableOpacity
                     activeOpacity={0.8}
                     style={styles.bookNowBtn}
-                    onPress={handleBookNow}
+                    onPress={() =>
+                        handleBookNow(
+                            paymentType === "partial"
+                                ? onSitePay()
+                                : Number(roomDetails?.finalPrice || 0)
+                        )
+                    }
                 >
-
                     <Text style={styles.bookNowText}>
 
                         {
                             paymentType === "partial"
-                                ? `Pay ₹${partialAmount}`
-                                : `Pay ₹${totalAmount}`
+                                ? `Pay ₹ ${onSitePay()}`
+                                : `Pay ₹ ${roomDetails?.finalPrice}`
                         }
-
                     </Text>
 
                 </TouchableOpacity>
+
+
 
             </View>
 
@@ -880,7 +836,6 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 17,
         color: "#111",
-        marginBottom: 16,
         fontFamily: "Poppins-SemiBold",
     },
 

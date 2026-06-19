@@ -1,6 +1,8 @@
 // RegisterScreen.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { GetCityList } from "../../../Services/Utils/UtilsService";
+
 import {
   View,
   Text,
@@ -11,6 +13,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  FlatList,
+  ActivityIndicator,
 } from "react-native";
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
@@ -31,6 +35,22 @@ import DeviceInfo from "react-native-device-info";
 import CustomButton from "../../../Component/formComponent/CustomButton";
 import { colors } from "../../../utility/AppTheam";
 import AppEnvironment from "../../../utility/AppEnvironment";
+import CustomeLoading from "../../../Component/Loading/CustomeLoading";
+
+
+const useDebounce = (value: string, delay = 300) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [value]);
+
+  return debouncedValue;
+};
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
@@ -40,10 +60,14 @@ const RegisterScreen = () => {
 
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
-  const [email, setEmail] = useState("");
   const [dob, setDob] = useState("");
-  const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
+  const [city, setCity] = useState("");
+  const [cityList, setCityList] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
+  const debouncedCity = useDebounce(city, 300);
 
   const [otp, setOtp] = useState(["", "", "", "", ""]);
 
@@ -62,6 +86,10 @@ const RegisterScreen = () => {
       case "fullName":
         if (!value.trim()) {
           error = "Full Name is required";
+        } else if (!/^[A-Za-z ]+$/.test(value.trim())) {
+          error = "Only letters and spaces are allowed";
+        } else if (value.trim().length > 45) {
+          error = "Name must not exceed 45 characters";
         }
         break;
 
@@ -73,14 +101,14 @@ const RegisterScreen = () => {
         }
         break;
 
-      case "email":
-        if (
-          value &&
-          !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)
-        ) {
-          error = "Enter valid email address";
-        }
-        break;
+      // case "email":
+      //   if (
+      //     value &&
+      //     !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)
+      //   ) {
+      //     error = "Enter valid email address";
+      //   }
+      //   break;
 
       case "dob":
         if (!value.trim()) {
@@ -88,19 +116,19 @@ const RegisterScreen = () => {
         }
         break;
 
-      case "address":
-        if (!value.trim()) {
-          error = "Address is required";
-        }
-        break;
+      // case "address":
+      //   if (!value.trim()) {
+      //     error = "Address is required";
+      //   }
+      //   break;
 
-      case "password":
-        if (!value.trim()) {
-          error = "Password is required";
-        } else if (value.length < 6) {
-          error = "Password must be minimum 6 characters";
-        }
-        break;
+      // case "password":
+      //   if (!value.trim()) {
+      //     error = "Password is required";
+      //   } else if (value.length < 6) {
+      //     error = "Password must be minimum 6 characters";
+      //   }
+      //   break;
 
       default:
         break;
@@ -114,32 +142,26 @@ const RegisterScreen = () => {
     return error;
   };
 
+
+
   const validateForm = () => {
     const fullNameError = validateField("fullName", fullName);
     const mobileError = validateField("mobile", mobile);
-    const emailError = validateField("email", email);
+    // const emailError = validateField("email", email);
     const dobError = validateField("dob", dob);
-    const addressError = validateField("address", address);
-    const passwordError = validateField("password", password);
+    // const passwordError = validateField("password", password);
 
     return !(
       fullNameError ||
-      mobileError ||
-      emailError ||
-      dobError ||
-      addressError ||
-      passwordError
+      mobileError
     );
   };
 
+
+
   const isFormValid =
     fullName.trim() &&
-    /^[6-9]\d{9}$/.test(mobile) &&
-    dob.trim() &&
-    address.trim() &&
-    password.trim().length >= 6 &&
-    (email === "" ||
-      /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email));
+    /^[6-9]\d{9}$/.test(mobile) && dob && selectedCityId
 
   // ================= REGISTER =================
 
@@ -147,16 +169,15 @@ const RegisterScreen = () => {
     const isValid = validateForm();
 
     if (!isValid) return;
-
+    setLoading(true);
     try {
       const payload = {
         name: fullName,
         mobile: mobile,
-        EmailAddress: email,
-        DateOfBirth: dob,
-        Address: address,
-        password: password,
+        dob: dob,
+        cityId: selectedCityId,
         branchCode: AppEnvironment.BRANCH_CODE,
+        isActive: true,
       };
 
       const registerDetails = await DevoteeRegister(payload);
@@ -172,12 +193,15 @@ const RegisterScreen = () => {
     } catch (error: any) {
       console.log("Register Error", error);
       showToast("Something went wrong", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   // ================= OTP VERIFY =================
 
   const handelSubmit = async () => {
+    setLoading(true);
     try {
       const enteredOtp = otp;
 
@@ -186,7 +210,7 @@ const RegisterScreen = () => {
         otp: enteredOtp,
         branchCode: AppEnvironment.BRANCH_CODE,
         deviceUserId: DeviceInfo.getDeviceId(),
-        appVersionCode: "1",
+        appVersionCode: DeviceInfo.getVersion(),
       };
 
       const loginResp = await DevoteeLogin(Loginform);
@@ -200,8 +224,86 @@ const RegisterScreen = () => {
     } catch (error: any) {
       console.log("OTP Verify Error", error);
       showToast("Something went wrong", "error");
+    } finally {
+      setLoading(false);
     }
   };
+
+
+  const parseDate = (dateStr: string) => {
+    const [dd, mm, yyyy] = dateStr.split('/');
+
+    return new Date(
+      Number(yyyy),
+      Number(mm) - 1,
+      Number(dd),
+    );
+  };
+
+
+
+
+  const handleCityChange = (text: string) => {
+    setCity(text);
+    setSelectedCityId(null);
+
+    if (text.trim().length < 3) {
+      setCityList([]);
+      setShowDropdown(false);
+    }
+  };
+
+  const fetchCityList = async (searchText: string) => {
+    try {
+      if (searchText.trim().length < 3) {
+        setCityList([]);
+        setShowDropdown(false);
+        return;
+      }
+
+      setLoading(true);
+      setShowDropdown(true);
+
+      const payload = {
+        pageNumber: 1,
+        pageSize: 10,
+        searchText,
+      };
+
+      const response = await GetCityList(payload);
+
+      const data = response?.result || [];
+
+      setCityList(data);
+
+      // ❗ IMPORTANT: if no data → close dropdown OR show message
+      if (data.length === 0) {
+        setShowDropdown(true); // show "No results"
+      }
+    } catch (err) {
+      console.log(err);
+      setCityList([]);
+      setShowDropdown(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+
+    // if city already selected -> don't search again
+    if (selectedCityId) {
+      return;
+    }
+
+    if (debouncedCity.trim().length >= 3) {
+      fetchCityList(debouncedCity);
+    } else {
+      setCityList([]);
+      setShowDropdown(false);
+    }
+
+  }, [debouncedCity]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -213,6 +315,7 @@ const RegisterScreen = () => {
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
         >
           {/* ================= HEADER ================= */}
 
@@ -249,7 +352,7 @@ const RegisterScreen = () => {
             {/* FULL NAME */}
 
             <CustomInput
-              label="Full Name"
+              label="Full Name*"
               placeholder="Enter your full name"
               icon="person-outline"
               value={fullName}
@@ -271,7 +374,7 @@ const RegisterScreen = () => {
             {/* MOBILE */}
 
             <CustomInput
-              label="Mobile Number"
+              label="Mobile Number*"
               placeholder="10-digit mobile number"
               icon="call"
               keyboardType="phone-pad"
@@ -299,7 +402,7 @@ const RegisterScreen = () => {
 
             {/* EMAIL */}
 
-            <CustomInput
+            {/* <CustomInput
               label="Email Address"
               placeholder="your.email@example.com"
               icon="mail-outline"
@@ -318,25 +421,56 @@ const RegisterScreen = () => {
               <Text style={styles.errorText}>
                 {errors.email}
               </Text>
-            ) : null}
+            ) : null} */}
 
             {/* DOB */}
 
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => setShowBirthPicker(true)}
-            >
-              <View pointerEvents="none">
-                <CustomInput
-                  label="Date of Birth"
-                  placeholder="dd-mm-yyyy"
-                  icon="calendar-today"
-                  value={dob}
-                  onChangeText={setDob}
-                  editable={false}
-                />
-              </View>
-            </TouchableOpacity>
+            <View>
+
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => setShowBirthPicker(true)}
+              >
+                <View pointerEvents="none">
+
+                  <CustomInput
+                    label="Date of Birth*"
+                    placeholder="dd-mm-yyyy"
+                    icon="calendar-today"
+                    value={dob}
+                    onChangeText={setDob}
+                    editable={false}
+                  />
+
+                </View>
+              </TouchableOpacity>
+
+              {/* {dob ? (
+
+                <TouchableOpacity
+                  style={{
+                    position: "absolute",
+                    right: 15,
+                    top: 42,
+                    height: 40,
+                    width: 40,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  onPress={() => setDob("")}
+                >
+
+                  <MaterialIcons
+                    name="close"
+                    size={20}
+                    color="#777"
+                  />
+
+                </TouchableOpacity>
+
+              ) : null} */}
+
+            </View>
 
             {errors.dob ? (
               <Text style={styles.errorText}>
@@ -344,34 +478,71 @@ const RegisterScreen = () => {
               </Text>
             ) : null}
 
-            {/* ADDRESS */}
+            {/* CITY */}
 
-            <CustomInput
-              label="Address"
-              placeholder="Enter your complete address"
-              icon="location-on"
-              value={address}
-              multiline
-              onChangeText={(text: string) => {
-                setAddress(text);
-                validateField("address", text);
-              }}
-              onBlur={() =>
-                validateField("address", address)
-              }
-            />
+            <View style={styles.cityWrapper}>
 
-            {errors.address ? (
-              <Text style={styles.errorText}>
-                {errors.address}
-              </Text>
-            ) : null}
+              <CustomInput
+                label="City*"
+                placeholder="Search city"
+                value={city}
+                icon="location-city"
+                onChangeText={(text: string) => {
+                  setCity(text);
+                  setSelectedCityId(null);
 
+                  if (text.trim().length < 3) {
+                    setCityList([]);
+                    setShowDropdown(false);
+                    return;
+                  }
+
+                  setShowDropdown(true);
+                }}
+              />
+
+              {showDropdown && (
+                <View style={styles.dropdownContainer}>
+
+                  {loading ? (
+                    <ActivityIndicator style={{ margin: 12 }} />
+                  ) : cityList.length === 0 ? (
+                    <Text style={styles.noResult}>
+                      No results found
+                    </Text>
+                  ) : (
+                    <View
+                    >
+                      {cityList.map((item) => (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={styles.item}
+                          onPress={() => {
+                            setCity(`${item.name}, ${item.stateName}`);
+                            setSelectedCityId(item.id);
+                            setCityList([]);
+                            setShowDropdown(false);
+                          }}
+                        >
+                          <Text style={styles.cityText}>
+                            {item.name}, {item.stateName}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                </View>
+              )}
+
+            </View>
             {/* PASSWORD */}
 
-            <View>
+
+            {/* <View style={{ position: "relative" }}>
+
               <CustomInput
-                label="Password"
+                label="Password*"
                 placeholder="Enter your password"
                 icon="lock-outline"
                 value={password}
@@ -391,23 +562,27 @@ const RegisterScreen = () => {
                   setShowPassword(!showPassword)
                 }
               >
+
                 <MaterialIcons
                   name={
                     showPassword
                       ? "visibility-off"
                       : "visibility"
                   }
-                  size={24}
-                  color="#666"
+                  size={22}
+                  color="#777"
                 />
+
               </TouchableOpacity>
+
             </View>
+
 
             {errors.password ? (
               <Text style={styles.errorText}>
                 {errors.password}
               </Text>
-            ) : null}
+            ) : null} */}
 
             {/* BUTTON */}
 
@@ -434,11 +609,14 @@ const RegisterScreen = () => {
               buttonStyle={styles.button}
             />
           </View>
+
+          <CustomeLoading isLoading={loading} />
         </ScrollView>
 
         {/* ================= CALENDAR ================= */}
 
         <CustomCalendar
+          selectedDate={dob ? parseDate(dob) : parseDate("1/1/2001")}
           visible={showBirthPicker}
           maxDate={new Date()}
           onDateSelect={(date: string) => {
@@ -472,15 +650,11 @@ const RegisterScreen = () => {
                 }
               />
 
-              <TouchableOpacity
-                style={styles.verifyButton}
+              <CustomButton
+                title="Verify OTP"
                 onPress={handelSubmit}
-              >
-                <Text style={styles.verifyText}>
-                  Verify OTP
-                </Text>
-              </TouchableOpacity>
-
+                buttonStyle={styles.verifyButton}
+              />
               <TouchableOpacity
                 onPress={() =>
                   setShowOtpModal(false)
@@ -494,7 +668,7 @@ const RegisterScreen = () => {
           </View>
         </Modal>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 };
 
@@ -507,9 +681,48 @@ const styles = StyleSheet.create({
   },
 
   scrollContainer: {
+    marginTop: 20,
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 40,
+  },
+
+  cityModal: {
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: "75%",
+  },
+
+  cityHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+
+  cityTitle: {
+    fontSize: 20,
+    color: "#111",
+    fontFamily: "Poppins-SemiBold",
+  },
+
+  cityItem: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2F2F2",
+  },
+
+  cityItemText: {
+    fontSize: 15,
+    color: "#111",
+    fontFamily: "Poppins-Regular",
+  },
+
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    color: "#999",
   },
 
   headerRow: {
@@ -517,6 +730,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 24,
+  },
+
+  dropdownIcon: {
+    position: "absolute",
+    right: 15,
+    top: 47,
   },
 
   backButton: {
@@ -565,18 +784,14 @@ const styles = StyleSheet.create({
 
   errorText: {
     color: "#E53935",
-    fontSize: 12,
-    marginTop: 4,
-    marginBottom: 8,
+    fontSize: 11,
+    marginBottom: 10,
     marginLeft: 4,
     fontFamily: "Poppins-Regular",
   },
 
   button: {
-    backgroundColor: colors.primary,
     marginTop: 24,
-    borderRadius: 14,
-    height: 55,
   },
 
   buttonText: {
@@ -587,8 +802,12 @@ const styles = StyleSheet.create({
 
   eyeButton: {
     position: "absolute",
-    right: 15,
-    top: 48,
+    right: 14,
+    top: 32,
+    height: 50,
+    width: 40,
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10,
   },
 
@@ -624,11 +843,6 @@ const styles = StyleSheet.create({
   },
 
   verifyButton: {
-    height: 55,
-    backgroundColor: "#FF6B00",
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
     marginTop: 24,
   },
 
@@ -644,5 +858,92 @@ const styles = StyleSheet.create({
     color: "#666",
     fontSize: 15,
     fontFamily: "Poppins-Medium",
+  },
+  label: {
+    fontSize: 14,
+    marginBottom: 8,
+    fontWeight: "600",
+    color: "#000",
+  },
+
+  // dropdown: {
+  //   borderWidth: 1,
+  //   borderColor: "#ccc",
+  //   borderRadius: 10,
+  //   paddingHorizontal: 15,
+  //   paddingVertical: 14,
+  //   justifyContent: "center",
+  // },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+
+  dropdownModal: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    maxHeight: 300,
+  },
+
+  item: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+
+  itemText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  dropdown: {
+    position: "absolute",
+    top: 80,
+    left: 20,
+    right: 20,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    maxHeight: 250,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    zIndex: 999,
+  },
+
+  cityText: {
+    fontSize: 15,
+    color: "#111",
+  },
+
+  noResult: {
+    padding: 15,
+    textAlign: "center",
+    color: "#999",
+  },
+
+  cityWrapper: {
+    position: "relative",
+    zIndex: 1000,
+  },
+  dropdownContainer: {
+    position: "absolute",
+    top: 85,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    maxHeight: 220,
+    overflow: "hidden",
+
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+
+    zIndex: 9999,
   },
 }); 

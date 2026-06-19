@@ -13,4 +13,5 @@ export const Icons = {
 export const Images = {
      Splash: require("../assets/images/Splash.png"),
      login: require("../assets/images/login.png"),
+     update: require("../assets/images/update.png"),
 }

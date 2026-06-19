@@ -12,9 +12,11 @@ import {
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import CustomInput from "../../Component/formComponent/CustomInput";
-// import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
 import AppEnvironment from "../../utility/AppEnvironment";
+import CustomButton from "../../Component/formComponent/CustomButton";
+import { useProfileStore } from "../../Stores/useProfileStore";
 
 interface Props {
     visible: boolean;
@@ -29,27 +31,23 @@ const DonationModal = ({
     Details,
     onSubmit,
 }: Props) => {
-
-    // const navigation: any = useNavigation();
-
     const [loading, setLoading] = useState(false);
-
     const [donationAmount, setDonationAmount] = useState(
-        Details?.defaultAmount?.toString() || "0"
+        Details?.defaultAmount?.toString() || " "
     );
-
-    const [name, setName] = useState("");
-    const [mobile, setMobile] = useState("");
+    const { myProfile, fetchMyprofile } = useProfileStore();
+    const [name, setName] = useState(myProfile?.fullName || "");
+    const [mobile, setMobile] = useState(myProfile?.mobile || "");
 
     const [nameError, setNameError] = useState("");
     const [mobileError, setMobileError] = useState("");
 
-    const amountList = [
+    const amountList = [ 
         501,
         1001,
         2100,
         5100,
-        11000, 
+        11000,
         21000,
         51000,
     ];
@@ -65,12 +63,14 @@ const DonationModal = ({
     // RESET
     // =========================
 
+    console.log("myProfile", myProfile)
+
     useEffect(() => {
 
         if (visible) {
 
             setDonationAmount(
-                Details?.defaultAmount?.toString() || "0"
+                Details?.defaultAmount?.toString() || " "
             );
 
             setName("");
@@ -86,52 +86,52 @@ const DonationModal = ({
     // VALIDATE
     // =========================
 
-    const validateForm = () => {
+    // const validateForm = () => {
 
-        let isValid = true;
+    //     let isValid = true;
 
-        // NAME
+    //     // NAME
 
-        if (!name.trim()) {
+    //     if (!name.trim()) {
 
-            setNameError("Name is required");
-            isValid = false;
+    //         setNameError("Name is required");
+    //         isValid = false;
 
-        } else if (!nameRegex.test(name.trim())) {
+    //     } else if (!nameRegex.test(name.trim())) {
 
-            setNameError("Enter valid name");
-            isValid = false;
+    //         setNameError("Enter valid name");
+    //         isValid = false;
 
-        } else {
+    //     } else {
 
-            setNameError("");
-        }
+    //         setNameError("");
+    //     }
 
-        // MOBILE
+    //     // MOBILE
 
-        if (!mobile.trim()) {
+    //     if (!mobile.trim()) {
 
-            setMobileError(
-                "Mobile number is required"
-            );
+    //         setMobileError(
+    //             "Mobile number is required"
+    //         );
 
-            isValid = false;
+    //         isValid = false;
 
-        } else if (!mobileRegex.test(mobile)) {
+    //     } else if (!mobileRegex.test(mobile)) {
 
-            setMobileError(
-                "Enter valid mobile number"
-            );
+    //         setMobileError(
+    //             "Enter valid mobile number"
+    //         );
 
-            isValid = false;
+    //         isValid = false;
 
-        } else {
+    //     } else {
 
-            setMobileError("");
-        }
+    //         setMobileError("");
+    //     }
 
-        return isValid;
-    };
+    //     return isValid;
+    // };
 
     // =========================
     // SUBMIT
@@ -147,7 +147,7 @@ const DonationModal = ({
             return;
         }
 
-        if (!validateForm()) return;
+        // if (!validateForm()) return;
 
         try {
 
@@ -157,8 +157,8 @@ const DonationModal = ({
                 ESevaId: Details?.id,
                 amount: Number(donationAmount),
                 branchCode: AppEnvironment.BRANCH_CODE,
-                mobile: mobile,
-                name: name,
+                mobile: myProfile?.mobile,
+                name: myProfile?.fullName,
                 paymentModeId: 1,
                 paymentTypeId: 1,
             };
@@ -176,6 +176,10 @@ const DonationModal = ({
             setLoading(false);
         }
     };
+
+    const isActiveDonate = donationAmount>0 
+
+    console.log("isActiveDonate", isActiveDonate,donationAmount)
 
     return (
         <Modal
@@ -212,39 +216,18 @@ const DonationModal = ({
                         </View>
 
                         {/* AMOUNT */}
-
-                        <Text style={styles.inputLabel}>
-                            Enter custom amount
-                        </Text>
-
-                        <View style={styles.amountInputContainer}>
-
-                            <Text style={styles.rupee}>
-                                ₹
-                            </Text>
-
-                            <TextInput
-                                value={donationAmount}
-                                keyboardType="number-pad"
-                                maxLength={9}
-                                placeholder="Enter Amount"
-                                onChangeText={(text) => {
-
-                                    const cleaned =
-                                        text.replace(
-                                            /[^0-9]/g,
-                                            ""
-                                        );
-
-                                    setDonationAmount(
-                                        cleaned || "0"
-                                    );
-                                }}
-                                style={styles.amountInput}
-                            />
-
-                        </View>
-
+                        <CustomInput
+                            label="Enter custom amount"
+                            value={donationAmount}
+                            icon="currency-rupee"
+                            onChangeText={(text) => {
+                                const cleaned = text.replace(/[^0-9]/g, "");
+                                setDonationAmount(cleaned || " ");
+                            }}
+                            onBlur={() => { }}
+                            maxLength={5}
+                            keyboardType="number-pad"
+                        />
                         {/* MIN AMOUNT */}
 
                         {(!donationAmount ||
@@ -427,61 +410,63 @@ const DonationModal = ({
 
                             <CustomInput
                                 placeholder="Your full name"
-                                value={name}
-                                onChangeText={(text) => {
+                                value={myProfile?.fullName}
+                                icon="person"
+                                readOnly={true}
+                            
+                                // onChangeText={(text) => {
+                                //     const cleaned =
+                                //         text.replace(
+                                //             /[^A-Za-z ]/g,
+                                //             ""
+                                //         );
 
-                                    const cleaned =
-                                        text.replace(
-                                            /[^A-Za-z ]/g,
-                                            ""
-                                        );
+                                //     setName(cleaned);
 
-                                    setName(cleaned);
+                                //     if (!cleaned.trim()) {
 
-                                    if (!cleaned.trim()) {
+                                //         setNameError(
+                                //             "Name is required"
+                                //         );
 
-                                        setNameError(
-                                            "Name is required"
-                                        );
+                                //     } else if (
+                                //         !nameRegex.test(
+                                //             cleaned.trim()
+                                //         )
+                                //     ) {
 
-                                    } else if (
-                                        !nameRegex.test(
-                                            cleaned.trim()
-                                        )
-                                    ) {
+                                //         setNameError(
+                                //             "Enter valid name"
+                                //         );
 
-                                        setNameError(
-                                            "Enter valid name"
-                                        );
+                                //     } else {
 
-                                    } else {
+                                //         setNameError("");
+                                //     }
+                                // }}
+                                // onBlur={() => {
 
-                                        setNameError("");
-                                    }
-                                }}
-                                onBlur={() => {
+                                //     if (!name.trim()) {
 
-                                    if (!name.trim()) {
+                                //         setNameError(
+                                //             "Name is required"
+                                //         );
 
-                                        setNameError(
-                                            "Name is required"
-                                        );
+                                //     } else if (
+                                //         !nameRegex.test(
+                                //             name.trim()
+                                //         )
+                                //     ) {
 
-                                    } else if (
-                                        !nameRegex.test(
-                                            name.trim()
-                                        )
-                                    ) {
+                                //         setNameError(
+                                //             "Enter valid name"
+                                //         );
 
-                                        setNameError(
-                                            "Enter valid name"
-                                        );
+                                //     } else {
 
-                                    } else {
-
-                                        setNameError("");
-                                    }
-                                }}
+                                //         setNameError("");
+                                //     }
+                                // }}
                             />
 
                             {nameError ? (
@@ -529,70 +514,71 @@ const DonationModal = ({
                                     placeholder="10 digit mobile number"
                                     keyboardType="number-pad"
                                     maxLength={10}
-                                    value={mobile}
-                                    onChangeText={(text) => {
+                                    value={myProfile?.mobile}
+                                    readOnly={true}
+                                    // onChangeText={(text) => {
 
-                                        const cleaned =
-                                            text.replace(
-                                                /[^0-9]/g,
-                                                ""
-                                            );
+                                    //     const cleaned =
+                                    //         text.replace(
+                                    //             /[^0-9]/g,
+                                    //             ""
+                                    //         );
 
-                                        setMobile(cleaned);
+                                    //     setMobile(cleaned);
 
-                                        if (
-                                            !cleaned.trim()
-                                        ) {
+                                    //     if (
+                                    //         !cleaned.trim()
+                                    //     ) {
 
-                                            setMobileError(
-                                                "Mobile number is required"
-                                            );
+                                    //         setMobileError(
+                                    //             "Mobile number is required"
+                                    //         );
 
-                                        } else if (
-                                            !mobileRegex.test(
-                                                cleaned
-                                            )
-                                        ) {
+                                    //     } else if (
+                                    //         !mobileRegex.test(
+                                    //             cleaned
+                                    //         )
+                                    //     ) {
 
-                                            setMobileError(
-                                                "Enter valid mobile number"
-                                            );
+                                    //         setMobileError(
+                                    //             "Enter valid mobile number"
+                                    //         );
 
-                                        } else {
+                                    //     } else {
 
-                                            setMobileError(
-                                                ""
-                                            );
-                                        }
-                                    }}
-                                    onBlur={() => {
+                                    //         setMobileError(
+                                    //             ""
+                                    //         );
+                                    //     }
+                                    // }}
+                                    // onBlur={() => {
 
-                                        if (
-                                            !mobile.trim()
-                                        ) {
+                                    //     if (
+                                    //         !mobile.trim()
+                                    //     ) {
 
-                                            setMobileError(
-                                                "Mobile number is required"
-                                            );
+                                    //         setMobileError(
+                                    //             "Mobile number is required"
+                                    //         );
 
-                                        } else if (
-                                            !mobileRegex.test(
-                                                mobile
-                                            )
-                                        ) {
+                                    //     } else if (
+                                    //         !mobileRegex.test(
+                                    //             mobile
+                                    //         )
+                                    //     ) {
 
-                                            setMobileError(
-                                                "Enter valid mobile number"
-                                            );
+                                    //         setMobileError(
+                                    //             "Enter valid mobile number"
+                                    //         );
 
-                                        } else {
+                                    //     } else {
 
-                                            setMobileError("");
-                                        }
-                                    }}
-                                    style={
-                                        styles.mobileInput
-                                    }
+                                    //         setMobileError("");
+                                    //     }
+                                    // }}
+                                    // style={
+                                    //     styles.mobileInput
+                                    // }
                                 />
 
                             </View>
@@ -610,6 +596,16 @@ const DonationModal = ({
                             ) : null}
 
                             {/* BUTTON */}
+
+
+                            <CustomButton
+                                title="Donate Now"
+                                onPress={() => {
+                                    handelProceedDonation()
+                                }}
+                                disabled={!isActiveDonate}
+                                buttonStyle={styles.proceedButton}
+                            />
 
                             <TouchableOpacity
                                 onPress={
@@ -797,7 +793,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#DDD",
         borderRadius: 14,
-        paddingVertical: 18,
+        paddingVertical: 12,
         alignItems: "center",
         marginBottom: 15,
     },
@@ -895,16 +891,10 @@ const styles = StyleSheet.create({
 
     proceedButton: {
         marginTop: 25,
-        backgroundColor: "#E7924A",
-        paddingVertical: 16,
+        // backgroundColor: "#E7924A",
+        // paddingVertical: 16,
         borderRadius: 40,
-        alignItems: "center",
-    },
-
-    proceedText: {
-        color: "#FFF",
-        fontSize: 18,
-        fontWeight: "700",
+        // alignItems: "center",
     },
 
     secureRow: {

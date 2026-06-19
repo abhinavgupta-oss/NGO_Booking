@@ -8,6 +8,7 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
+    Pressable,
 } from "react-native";
 
 import CustomInput from "../../../Component/formComponent/CustomInput";
@@ -24,13 +25,16 @@ import OtpInput from "../../../Component/otpInput";
 import { useNavigation } from "@react-navigation/native";
 import { Images } from "../../../utility/utility";
 import LinearGradient from "react-native-linear-gradient";
-import {colors } from "../../../utility/AppTheam";
+import { colors } from "../../../utility/AppTheam";
 import AppEnvironment from "../../../utility/AppEnvironment";
+import CustomeLoading from "../../../Component/Loading/CustomeLoading";
+import MaterialIcons from "@react-native-vector-icons/material-icons";
 
 const LoginScreen = () => {
     const navigation = useNavigation<any>();
     const { showToast } = useToast();
-
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     // =========================
     // TOGGLE
     // =========================
@@ -103,6 +107,7 @@ const LoginScreen = () => {
     // =========================
     const handelSendOTP = async () => {
         try {
+            setLoading(true);
             if (!UserID.trim()) {
                 setEmailError("Phone number is required");
                 return;
@@ -125,6 +130,8 @@ const LoginScreen = () => {
             }
         } catch (error: any) {
             showToast(error?.customMessage || "Something went wrong", "error");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -133,6 +140,7 @@ const LoginScreen = () => {
     // =========================
     const handelLogin = async () => {
         try {
+            setLoading(true);
             if (!validateForm()) return;
 
             const Loginform = {
@@ -153,6 +161,8 @@ const LoginScreen = () => {
             }
         } catch (error: any) {
             showToast(error?.customMessage || "Login Failed", "error");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -161,6 +171,7 @@ const LoginScreen = () => {
     // =========================
     const handelLoginPassword = async () => {
         try {
+            setLoading(true);
             if (!validateForm()) return;
 
             const LoginPass = {
@@ -179,6 +190,8 @@ const LoginScreen = () => {
             }
         } catch (error: any) {
             showToast(error?.customMessage || "Login Failed", "error");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -221,10 +234,12 @@ const LoginScreen = () => {
                 {/* ========================= */}
 
                 <View style={styles.card}>
-                    <Text style={styles.title}>Welcome Devotee 👋</Text>
+                    <Text style={styles.title}>
+                        Welcome <Text style={styles.devoteeText}>Devotee 🙏</Text>
+                    </Text>
 
                     <Text style={styles.subTitle}>
-                        Login to continue your spiritual journey
+                        Login to continue your journey
                     </Text>
 
                     {/* ========================= */}
@@ -233,8 +248,6 @@ const LoginScreen = () => {
 
                     <View style={styles.toggleContainer}>
                         <TouchableOpacity
-                            testID="login-mode-otp"
-                            accessibilityLabel="login-mode-otp"
                             style={[
                                 styles.toggleButton,
                                 loginType === "OTP" && styles.activeToggle,
@@ -248,20 +261,18 @@ const LoginScreen = () => {
                                 style={[
                                     styles.toggleText,
                                     loginType === "OTP" &&
-                                        styles.activeToggleText,
+                                    styles.activeToggleText,
                                 ]}
                             >
-                                Via OTP
+                             OTP
                             </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            testID="login-mode-password"
-                            accessibilityLabel="login-mode-password"
                             style={[
                                 styles.toggleButton,
                                 loginType === "PASSWORD" &&
-                                    styles.activeToggle,
+                                styles.activeToggle,
                             ]}
                             onPress={() => {
                                 setLoginType("PASSWORD");
@@ -272,7 +283,7 @@ const LoginScreen = () => {
                                 style={[
                                     styles.toggleText,
                                     loginType === "PASSWORD" &&
-                                        styles.activeToggleText,
+                                    styles.activeToggleText,
                                 ]}
                             >
                                 Password
@@ -286,9 +297,10 @@ const LoginScreen = () => {
 
                     <View style={styles.inputHeader}>
                         <Text style={styles.label}>
-                            {loginType === "OTP"
+                            {/* {loginType === "OTP"
                                 ? "Phone Number"
-                                : "User ID"}
+                                : "User ID"} */}
+                                Phone Number
                         </Text>
 
                         {!isNumberEditable && loginType === "OTP" && (
@@ -300,11 +312,7 @@ const LoginScreen = () => {
 
                     <CustomInput
                         icon={"phone"}
-                        placeholder={
-                            loginType === "OTP"
-                                ? "Enter Phone Number"
-                                : "Enter User ID"
-                        }
+                        placeholder={"Enter Phone Number"}
                         value={UserID}
                         editable={
                             loginType === "OTP"
@@ -316,8 +324,6 @@ const LoginScreen = () => {
                                 ? "number-pad"
                                 : "default"
                         }
-                        testID="login-user-id-input"
-                        accessibilityLabel="login-user-id-input"
                         onChangeText={(text) => {
                             setUserID(text);
                             setEmailError("");
@@ -333,19 +339,52 @@ const LoginScreen = () => {
                         <View style={{ marginTop: 5 }}>
                             <Text style={styles.label}>Password</Text>
 
-                            <CustomInput
-                                icon={"lock"}
-                                placeholder="Enter Password"
-                                value={password}
-                                secureTextEntry
-                                testID="login-password-input"
-                                accessibilityLabel="login-password-input"
-                                onChangeText={(text) => {
-                                    setPassword(text);
-                                    setPasswordError("");
-                                }}
-                                error={passwordError}
-                            />
+                            <View style={{ position: "relative" }}>
+                                <CustomInput
+                                    icon="lock"
+                                    placeholder="Enter Password or DOB"
+                                    value={password}
+                                    secureTextEntry={!showPassword}
+                                    onChangeText={(text) => {
+                                        setPassword(text);
+                                        setPasswordError("");
+                                    }}
+                                    error={passwordError}
+                                />
+
+                                <TouchableOpacity
+                                    style={{
+                                        position: "absolute",
+                                        right: 15,
+                                        top: 18,
+                                    }}
+                                    onPress={() =>
+                                        setShowPassword(!showPassword)
+                                    }
+                                >
+                                    <MaterialIcons
+                                        name={
+                                            showPassword
+                                                ? "visibility-off"
+                                                : "visibility"
+                                        }
+                                        size={24}
+                                        color="#777"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* ========================= */}
+                    {/* FORGET PASSWORD */}
+                    {/* ========================= */}
+
+                    {loginType === "PASSWORD" &&(
+                        <View style={{flexDirection:"row",justifyContent:"flex-end",alignItems:"flex-end"}}>
+                            <Pressable onPress={()=>navigation.navigate("ForgetPassword")}>
+                            <Text style={styles.linkText}>Forget Password</Text>
+                            </Pressable>
                         </View>
                     )}
 
@@ -356,11 +395,11 @@ const LoginScreen = () => {
                     {showOtpArea && loginType === "OTP" && (
                         <View style={styles.otpContainer}>
                             <Text style={styles.otpTitle}>
-                                Enter Verification Code
+                                Enter Verification OTP
                             </Text>
 
                             <OtpInput
-                                onChangeOTP={(code: string[]) => setOtp(code)}
+                                onChangeOTP={(code) => setOtp(code)}
                             />
 
                             <View style={styles.resendContainer}>
@@ -391,14 +430,12 @@ const LoginScreen = () => {
                                 title="Send OTP"
                                 onPress={handelSendOTP}
                                 buttonStyle={styles.button}
-                                testID="login-send-otp-button"
                             />
                         ) : (
                             <CustomButton
                                 title="Login"
                                 onPress={handelLogin}
                                 buttonStyle={styles.button}
-                                testID="login-otp-button"
                             />
                         )
                     ) : (
@@ -406,7 +443,6 @@ const LoginScreen = () => {
                             title="Login"
                             onPress={handelLoginPassword}
                             buttonStyle={styles.button}
-                            testID="login-password-button"
                         />
                     )}
 
@@ -425,12 +461,13 @@ const LoginScreen = () => {
                             }
                         >
                             <Text style={styles.linkText}>
-                                Register
+                                Register Now
                             </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
+            <CustomeLoading isLoading={loading} />
         </KeyboardAvoidingView>
     );
 };
@@ -482,9 +519,14 @@ const styles = StyleSheet.create({
     },
 
     title: {
-        fontSize: 28,
+        fontSize: 25,
         fontFamily: "Poppins-SemiBold",
         color: "#1A1A1A",
+    },
+
+    devoteeText: {
+        fontSize: 30,
+        color: colors.primary,
     },
 
     subTitle: {
@@ -505,12 +547,12 @@ const styles = StyleSheet.create({
         backgroundColor: "#F5F5F5",
         borderRadius: 14,
         padding: 5,
-        marginBottom: 24,
+        marginBottom: 20,
     },
 
     toggleButton: {
         flex: 1,
-        paddingVertical: 13,
+        paddingVertical: 8,
         alignItems: "center",
         borderRadius: 10,
     },
@@ -566,7 +608,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontFamily: "Poppins-SemiBold",
         color: "#333",
-        marginBottom: 18,
+        // marginBottom: 18,
     },
 
     resendContainer: {
@@ -590,10 +632,7 @@ const styles = StyleSheet.create({
     // =========================
 
     button: {
-        backgroundColor: colors.primary,
         marginTop: 24,
-        borderRadius: 14,
-        height: 55,
     },
 
     // =========================

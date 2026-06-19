@@ -1,6 +1,4 @@
-// src/screens/EventDetailsScreen.tsx
-
-import React from "react";
+import React, { useEffect } from "react";
 import {
     View,
     Text,
@@ -14,21 +12,36 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { colors } from "../../utility/AppTheam";
+import { useEventStore } from "../../Stores/useEventStore";
+import CustomeLoading from "../../Component/Loading/CustomeLoading";
+import { removeHtmlTags } from "../../Helper/HtmlTagHelper";
 
 const EventDetailsScreen = ({ route, navigation }: any) => {
 
-    const { eventDetails } = route.params;
+    const { eventId } = route.params;
+
+    const { fetchEventDetails, eventDetails, loading, error } = useEventStore();
+
+    useEffect(() => {
+        EventDetails();
+    }, []);
+
+    const EventDetails = async () => {
+        try {
+            const resp = await fetchEventDetails({ eventId: eventId });
+            console.log("Event Details:", resp);
+        } catch (error) {
+            console.log("Event Details Error:", error);
+        }
+    }
+
+
 
     // =========================
     // REMOVE HTML TAGS
     // =========================
 
-    const removeHtmlTags = (text: string) => {
-        if (!text) return "";
-
-        return text.replace(/<[^>]*>/g, "");
-    };
-
+   
     // =========================
     // STATUS COLOR
     // =========================
@@ -62,11 +75,7 @@ const EventDetailsScreen = ({ route, navigation }: any) => {
             <ScrollView
                 showsVerticalScrollIndicator={false}
             >
-
-                {/* ================= HEADER IMAGE ================= */}
-
                 <View>
-
                     <Image
                         source={{
                             uri: eventDetails?.bannerURL,
@@ -162,7 +171,7 @@ const EventDetailsScreen = ({ route, navigation }: any) => {
                                 </Text>
 
                                 <Text style={styles.infoValue}>
-                                    {eventDetails?.startDate} -{" "}
+                                    {eventDetails?.startDate} {"to "}
                                     {eventDetails?.endDate}
                                 </Text>
                             </View>
@@ -187,8 +196,14 @@ const EventDetailsScreen = ({ route, navigation }: any) => {
                                 </Text>
 
                                 <Text style={styles.infoValue}>
-                                    {eventDetails?.startTimeHr} -{" "}
-                                    {eventDetails?.endTimeHr}
+                                    {eventDetails?.startTimeHr}
+                                    {eventDetails?.endTimeHr && (
+                                        <>
+                                            {" - "}
+                                            {eventDetails?.endTimeHr}
+                                        </>
+                                    )}
+
                                 </Text>
                             </View>
 
@@ -255,15 +270,91 @@ const EventDetailsScreen = ({ route, navigation }: any) => {
 
                     {/* ================= DESCRIPTION ================= */}
 
-                    <Text style={styles.sectionTitle}>
-                        About Event
-                    </Text>
+                    {eventDetails?.longDescription && (
+                        <>
+                            <Text style={styles.sectionTitle}>
+                                About Event
+                            </Text>
 
-                    <Text style={styles.description}>
-                        {removeHtmlTags(
-                            eventDetails?.longDescription
-                        )}
-                    </Text>
+                            <Text style={styles.description}>
+                                {removeHtmlTags(eventDetails?.longDescription)}
+                            </Text>
+                        </>
+                    )}
+
+                    {/* ================= EVENT SCHEDULE ================= */}
+
+                    {eventDetails?.eventSchedules?.length > 0 && (
+                        <>
+                            <Text style={styles.sectionTitle}>
+                                Event Schedule
+                            </Text>
+
+                            {eventDetails?.eventSchedules?.map(
+                                (schedule: any, index: number) => (
+
+                                    <LinearGradient
+                                        key={index}
+                                        colors={["#FFFFFF", "#FFF7ED"]}
+                                        style={styles.scheduleCard}
+                                    >
+
+                                        {/* HEADER */}
+
+                                        <View style={styles.scheduleHeader}>
+
+                                            <View style={styles.scheduleDateBox}>
+                                                <MaterialIcons
+                                                    name="calendar-month"
+                                                    size={22}
+                                                    color="#FFF"
+                                                />
+                                            </View>
+
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.scheduleTitle}>
+                                                    {schedule?.title}
+                                                </Text>
+
+                                                <Text style={styles.scheduleDate}>
+                                                    {schedule?.date}
+                                                </Text>
+                                            </View>
+
+                                        </View>
+
+                                        {/* TIME */}
+
+                                        <View style={styles.scheduleInfoRow}>
+                                            <MaterialIcons
+                                                name="access-time"
+                                                size={18}
+                                                color={colors.primary}
+                                            />
+
+                                            <Text style={styles.scheduleInfoText}>
+                                                {schedule?.startTimeHr}
+                                                {schedule?.endTimeHr
+                                                    ? ` - ${schedule?.endTimeHr}`
+                                                    : ""}
+                                            </Text>
+                                        </View>
+
+                                        {/* DESCRIPTION */}
+
+                                        {schedule?.shortDescription ? (
+                                            <Text style={styles.scheduleDescription}>
+                                                {removeHtmlTags(
+                                                    schedule?.shortDescription
+                                                )}
+                                            </Text>
+                                        ) : null}
+
+                                    </LinearGradient>
+                                )
+                            )}
+                        </>
+                    )}
 
                     {/* ================= ORGANIZER ================= */}
 
@@ -369,6 +460,8 @@ const EventDetailsScreen = ({ route, navigation }: any) => {
                 </View>
 
             </ScrollView>
+
+            <CustomeLoading isLoading={loading} />
 
         </View>
     );
@@ -508,6 +601,7 @@ const styles = StyleSheet.create({
         color: "#555",
         lineHeight: 28,
         fontFamily: "Poppins-SemiBold",
+        textAlign: "justify",
 
     },
 
@@ -589,5 +683,62 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontFamily: "Poppins-SemiBold",
 
+    },
+
+    scheduleCard: {
+        marginTop: 15,
+        borderRadius: 20,
+        padding: 18,
+        backgroundColor: "#FFF",
+        elevation: 2,
+    },
+
+    scheduleHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 14,
+    },
+
+    scheduleDateBox: {
+        width: 50,
+        height: 50,
+        borderRadius: 15,
+        backgroundColor: colors.primary,
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 14,
+    },
+
+    scheduleTitle: {
+        fontSize: 16,
+        fontFamily: "Poppins-SemiBold",
+        color: "#111",
+    },
+
+    scheduleDate: {
+        marginTop: 4,
+        fontSize: 13,
+        color: "#666",
+        fontFamily: "Poppins-SemiBold",
+    },
+
+    scheduleInfoRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 12,
+    },
+
+    scheduleInfoText: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: "#333",
+        fontFamily: "Poppins-SemiBold",
+    },
+
+    scheduleDescription: {
+        fontSize: 14,
+        color: "#555",
+        lineHeight: 24,
+        fontFamily: "Poppins-Regular",
     },
 });

@@ -1,60 +1,68 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Text, View, Image, StyleSheet, StatusBar, TouchableOpacity, ScrollView, FlatList } from "react-native";
-import { useRoute } from "@react-navigation/native";
-import { colors } from "../../utility/AppTheam";
-import LinearGradient from "react-native-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
-import MaterialIcons from "@react-native-vector-icons/material-icons";
-import { Dimensions } from "react-native";
-const screenWidth = Dimensions.get("window").width;
+import React, { useEffect, useRef, useState } from "react";
+import {
+    Text,
+    View,
+    Image,
+    StyleSheet,
+    StatusBar,
+    TouchableOpacity,
+    ScrollView,
+    FlatList,
+    Dimensions,
+} from "react-native";
 
+import { useRoute, useNavigation } from "@react-navigation/native";
+import LinearGradient from "react-native-linear-gradient";
+import MaterialIcons from "@react-native-vector-icons/material-icons";
+
+import { colors } from "../../utility/AppTheam";
+import { useBookingStore } from "../../Stores/useBookingStore";
+import CommonHeader from "../../Component/Header/CommonHeader";
+import CustomeLoading from "../../Component/Loading/CustomeLoading";
+import { removeHtmlTags } from "../../Helper/HtmlTagHelper";
+
+const screenWidth = Dimensions.get("window").width;
 
 const RoomDetailsScreen = () => {
 
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const route = useRoute();
-    const { room } = route.params;
 
+    const { roomAvailable, roomId } = route.params as any;
 
-    const flatListRef = useRef(null);
+    console.log("Room Details:", roomAvailable);
+
+    const flatListRef = useRef<FlatList>(null);
+
     const [activeIndex, setActiveIndex] = useState(0);
-
-    const roomImages = useMemo(
-        () =>
-            room?.images || [
-                "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945",
-                "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267",
-            ],
-        [room]
-    );
-
-    const amenities = room?.amenities || [
-        "AC",
-        "WiFi",
-        "TV",
-        "Parking",
-        "Breakfast",
-    ];
+    const { roomDetails, loading, fetchRoomDetails, } = useBookingStore();
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            let nextIndex = activeIndex + 1;
+        RoomDetails();
+    }, []);
 
-            if (nextIndex >= roomImages.length) {
-                nextIndex = 0;
-            }
+    const RoomDetails = async () => {
+        try {
+            console.log("Fetching Room Details for ID:", roomId);
+            const response = await fetchRoomDetails(roomId);
+            console.log("RoomDetails Response:", roomDetails);
+        } catch (error) {
+            console.log("RoomDetails Error:", error);
+        }
+    }
 
-            flatListRef.current?.scrollToIndex({
-                index: nextIndex,
-                animated: true,
-            });
 
-            setActiveIndex(nextIndex);
-        }, 3000); // 3 sec
+    const room = roomDetails || {};
 
-        return () => clearInterval(interval);
-    }, [activeIndex, roomImages.length]);
+    const roomImages =
+        room?.roomGalleries?.length > 0
+            ? room.roomGalleries.map((item: any) => item.imageUrl)
+            : [
+                'https://res.cloudinary.com/orangeskill-dev/image/upload/v1778498247/NGO/ttg/uploads/albumimage/c010a75fff2c4ce8b879e92f8cf1bda1.jpg',
+            ];
+
+    const amenities =
+        room?.amenities?.filter((item: any) => item.isAssigned) || [];
 
     return (
 
@@ -64,44 +72,16 @@ const RoomDetailsScreen = () => {
                 backgroundColor={colors.primary}
                 barStyle="light-content"
             />
+
             {/* ================= HEADER ================= */}
-
-            <LinearGradient
-                colors={[colors.primary, "#F59E0B"]}
-                style={styles.header}
-            >
-
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => navigation.goBack()}
-                    style={styles.backBtn}
-                >
-                    <MaterialIcons
-                        name="arrow-back"
-                        size={24}
-                        color="#FFF"
-                    />
-                </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>
-                    Room Details
-                </Text>
-                <TouchableOpacity>
-                    <MaterialIcons
-                        name="favorite"
-                        size={22}
-                        color="red"
-                    />
-                </TouchableOpacity>
-            </LinearGradient>
+            <CommonHeader title="Room Details" />
             {/* ================= BODY ================= */}
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContainer}
-
             >
-                {/* ================= IMAGE CAROUSEL ================= */}
+                {/* IMAGE CAROUSEL */}
                 <FlatList
                     ref={flatListRef}
                     data={roomImages}
@@ -109,19 +89,14 @@ const RoomDetailsScreen = () => {
                     pagingEnabled
                     showsHorizontalScrollIndicator={false}
                     keyExtractor={(item, index) => index.toString()}
-                    snapToInterval={screenWidth}
-                    decelerationRate="fast"
-                    bounces={false}
                     renderItem={({ item }) => (
                         <View style={styles.imageWrapper}>
-                            <Image source={{ uri: item }} style={styles.roomImage} />
+                            <Image
+                                source={{ uri: item }}
+                                style={styles.roomImage}
+                            />
                         </View>
                     )}
-                    getItemLayout={(data, index) => ({
-                        length: screenWidth,
-                        offset: screenWidth * index,
-                        index,
-                    })}
                     onMomentumScrollEnd={(event) => {
                         const index = Math.round(
                             event.nativeEvent.contentOffset.x / screenWidth
@@ -129,148 +104,148 @@ const RoomDetailsScreen = () => {
                         setActiveIndex(index);
                     }}
                 />
+
+                {/* DOTS */}
+
                 <View style={styles.dotsContainer}>
-                    {roomImages.map((_, index) => (
+                    {roomImages.map((_: any, index: number) => (
                         <View
                             key={index}
                             style={[
                                 styles.dot,
-                                activeIndex === index && styles.activeDot
+                                activeIndex === index && styles.activeDot,
                             ]}
                         />
                     ))}
                 </View>
-                {/* ================= ROOM INFO ================= */}
+
+                {/* ROOM INFO */}
 
                 <View style={styles.infoContainer}>
 
                     <Text style={styles.roomName}>
-                        {room?.roomName || "AC Room"}
+                        {room?.roomTypeName}
                     </Text>
 
-                    <Text style={styles.roomPrice}>
-                        {room?.price || 1200}
-                        <Text style={styles.nightText} />
-                    </Text>
-
-                </View>
-
-                {/* ================= ICON CARDS (GUEST + AMENITIES) ================= */}
-
-                <View style={styles.iconRowContainer}>
-
-                    {/* GUESTS */}
-                    <View style={styles.itemContainer}>
-
-                        <View style={styles.guestCard}>
-                            <MaterialIcons
-                                name="groups"
-                                color={colors.primary}
-                                size={28}
-                            />
-                        </View>
-
-                        <Text style={styles.itemText}>
-                            2 Guests
+                    <View style={styles.priceRow}>
+                        <Text style={styles.roomPrice}>
+                            ₹{room?.finalPrice}
                         </Text>
 
+                        <Text style={styles.nightText}>
+                            / Night
+                        </Text>
                     </View>
 
-                    {/* AMENITIES */}
-                    {amenities.slice(0, 3).map((item, index) => (
-                        <View key={index} style={styles.itemContainer}>
-
-                            <View style={styles.amenityCard}>
-                                <MaterialIcons
-                                    name={
-                                        item === "AC"
-                                            ? "ac-unit"
-                                            : item === "WiFi"
-                                                ? "wifi"
-                                                : item === "TV"
-                                                    ? "tv"
-                                                    : "star"
-                                    }
-                                    color={colors.primary}
-                                    size={26}
-                                />
+                    {room?.discountPercentage > 0 && (
+                        <>
+                            <View style={styles.discountBadge}>
+                                <Text style={styles.discountText}>
+                                    {room?.discountPercentage}% OFF
+                                </Text>
                             </View>
 
-                            <Text style={styles.itemText}>
-                                {item}
+                            <Text style={styles.oldPrice}>
+                                ₹{room?.totalPrice}
                             </Text>
-
-                        </View>
-                    ))}
+                        </>
+                    )}
 
                 </View>
 
-                {/* ================= ABOUT ROOM ================= */}
+                {/* ROOM FEATURES */}
+                <Text style={styles.sectionTitle}>
+                    Amenities
+                </Text>
+
+                <View style={styles.iconRowContainer}>
+                    {amenities.map((item: any, index: number) => (
+                        <View style={styles.itemContainer}
+                            key={index}>
+                            <View style={styles.guestCard} >
+                                <MaterialIcons
+                                    name={item.icon}
+                                    color="#8a8686"
+                                    size={28}
+                                />
+                            </View>
+                        </View>
+                    ))}
+                </View>
+
+                {/* <MaterialIcons name="local-taxi" size={28}/> */}
+
+                {/* ABOUT */}
+
                 <Text style={styles.sectionTitle}>
                     About Room
                 </Text>
+
                 <Text style={styles.aboutText}>
-                    {room?.description ||
-                        "Enjoy a luxurious and comfortable stay with modern amenities and premium interiors. Perfect for family and business trips."}
+                    {removeHtmlTags(room?.description) ||
+                        "Enjoy a comfortable stay with modern amenities, spacious interiors, and excellent hospitality. Designed for relaxation and convenience, our rooms provide everything you need for a pleasant and memorable experience."}
                 </Text>
 
-                {/* ================= SELECT DATE ================= */}
+                {/* DATE */}
+
                 <Text style={styles.sectionTitle}>
                     Select Date
                 </Text>
+
                 <View style={styles.dateContainer}>
 
-                    {/* CHECK IN CARD */}
                     <View style={styles.dateCard}>
-
-                        <Text style={styles.dateLabel}>Check In</Text>
+                        <Text style={styles.dateLabel}>
+                            Check In
+                        </Text>
 
                         <View style={styles.dateRow}>
-                            <Text style={styles.dateValue}>20 May 2026</Text>
-
+                            <Text style={styles.dateValue}>
+                                {roomAvailable?.checkIn}
+                            </Text>
                             <MaterialIcons
                                 name="calendar-month"
+                                color="#8a8686"
                                 size={20}
-                                color={colors.primary}
                             />
                         </View>
-
                     </View>
 
-                    {/* CHECK OUT CARD */}
                     <View style={styles.dateCard}>
-
-                        <Text style={styles.dateLabel}>Check Out</Text>
+                        <Text style={styles.dateLabel}>
+                            Check Out
+                        </Text>
 
                         <View style={styles.dateRow}>
-                            <Text style={styles.dateValue}>22 May 2026</Text>
-
+                            <Text style={styles.dateValue}>
+                                {roomAvailable?.checkOut}
+                            </Text>
                             <MaterialIcons
                                 name="calendar-month"
+                                color="#8a8686"
                                 size={20}
-                                color={colors.primary}
                             />
                         </View>
-
                     </View>
 
                 </View>
 
-            </ScrollView>
-            <View style={styles.bottomContainer}>
+                <CustomeLoading isLoading={loading} />
 
+            </ScrollView>
+
+            {/* ================= BOTTOM BUTTON ================= */}
+
+            <View style={styles.bottomContainer}>
                 <TouchableOpacity
                     activeOpacity={0.8}
-                    style={styles.bookNowBtn}   onPress={() =>
-        navigation.navigate("CreateBookingScreen", {
-             bookingData: {
-                room: room,
-                guests: 2,
-                checkIn: "20 May 2026",
-                checkOut: "22 May 2026",
-            },
-        })
-    }
+                    style={styles.bookNowBtn}
+                    onPress={() =>
+                        navigation.navigate("CreateBookingScreen", {
+                            bookingData: roomAvailable,
+                            roomId: roomId
+                        })
+                    }
                 >
                     <Text style={styles.bookNowText}>
                         Continue to Book
@@ -278,12 +253,12 @@ const RoomDetailsScreen = () => {
                 </TouchableOpacity>
 
             </View>
+
         </View>
 
     );
 
-
-}
+};
 
 export default RoomDetailsScreen;
 
@@ -293,8 +268,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#F8F8F8",
     },
-
-    // ================= HEADER =================
 
     header: {
         paddingTop: 25,
@@ -308,26 +281,6 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
 
-    iconRowContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        paddingHorizontal: 18,
-        marginTop: 20,
-    },
-
-    itemContainer: {
-        alignItems: "center",
-        width: "18%",
-    },
-
-    itemText: {
-        marginTop: 8,
-        color: "#777",
-        fontSize: 12,
-        fontFamily: "Poppins-SemiBold",
-        textAlign: "center",
-    },
-
     backBtn: {
         width: 42,
         height: 42,
@@ -337,8 +290,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
 
-
-
     headerTitle: {
         flex: 1,
         textAlign: "center",
@@ -347,29 +298,30 @@ const styles = StyleSheet.create({
         fontFamily: "Poppins-SemiBold",
     },
 
-    // ================= BODY =================
-
     scrollContainer: {
-        padding: 18,
-        paddingBottom: 100,
+        paddingBottom: 120,
     },
 
     imageWrapper: {
         width: screenWidth,
-        justifyContent: "center",
-        alignItems: "center",
+    },
+
+    roomImage: {
+        width: screenWidth,
+        height: 250,
+        resizeMode: "cover",
     },
 
     dotsContainer: {
         flexDirection: "row",
         justifyContent: "center",
-        marginTop: 10,
+        marginTop: 12,
     },
 
     dot: {
         width: 7,
         height: 7,
-        borderRadius: 4,
+        borderRadius: 5,
         backgroundColor: "#ccc",
         marginHorizontal: 4,
     },
@@ -379,25 +331,10 @@ const styles = StyleSheet.create({
         backgroundColor: colors.primary,
     },
 
-    roomPrice: {
-        marginTop: 6,
-        color: colors.primary,
-        fontSize: 22,
-        fontFamily: "Poppins-Bold",
-    },
-
-
     infoContainer: {
         paddingHorizontal: 18,
         marginTop: 20,
     },
-
-    roomImage: {
-        width: screenWidth,
-        height: 240,
-        resizeMode: "cover",
-    },
-
 
     roomName: {
         color: "#111",
@@ -405,60 +342,97 @@ const styles = StyleSheet.create({
         fontFamily: "Poppins-Bold",
     },
 
+    priceRow: {
+        flexDirection: "row",
+        alignItems: "flex-end",
+        marginTop: 6,
+    },
+
+    roomPrice: {
+        color: colors.primary,
+        fontSize: 24,
+        fontFamily: "Poppins-Bold",
+    },
+
     nightText: {
+        marginLeft: 6,
+        marginBottom: 4,
         color: "#777",
-        fontSize: 15,
+        fontSize: 14,
         fontFamily: "Poppins-Regular",
     },
 
-    guestText: {
-        marginLeft: 10,
-        color: "#333",
-        fontSize: 15,
-        fontFamily: "Poppins-Medium",
+    oldPrice: {
+        color: "#999",
+        fontSize: 14,
+        textDecorationLine: "line-through",
+        marginTop: 4,
+        fontFamily: "Poppins-Regular",
     },
 
-    guestBox: {
-        marginHorizontal: 18,
-        marginTop: 18,
-        backgroundColor: "#FFF",
-        padding: 15,
-        borderRadius: 16,
+    discountBadge: {
+        marginTop: 10,
+        backgroundColor: "#E8F8EE",
+        alignSelf: "flex-start",
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 20,
+    },
+
+    discountText: {
+        color: "#1B9C57",
+        fontSize: 12,
+        fontFamily: "Poppins-SemiBold",
+    },
+
+    iconRowContainer: {
         flexDirection: "row",
+        justifyContent: "flex-start",
+        paddingHorizontal: 10,
+    },
+
+    itemContainer: {
         alignItems: "center",
-        elevation: 2,
+        width: "23%",
+    },
+
+    itemText: {
+        marginTop: 8,
+        color: "#777",
+        fontSize: 11,
+        textAlign: "center",
+        fontFamily: "Poppins-SemiBold",
+    },
+
+    guestCard: {
+        width: 68,
+        height: 68,
+        backgroundColor: "#FFF",
+        borderRadius: 16,
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#eee",
+    },
+
+    amenityCard: {
+        width: 68,
+        height: 68,
+        backgroundColor: "#FFF",
+        borderRadius: 16,
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#eee",
     },
 
     sectionTitle: {
-        marginTop: 24,
+        marginTop: 28,
         marginHorizontal: 18,
         marginBottom: 14,
         color: "#111",
         fontSize: 18,
         fontFamily: "Poppins-SemiBold",
-    },
-
-    amenitiesContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        paddingHorizontal: 18,
-    },
-
-
-    amenityBox: {
-        backgroundColor: "#FFF",
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 14,
-        marginRight: 10,
-        marginBottom: 10,
-        elevation: 2,
-    },
-
-    amenityText: {
-        color: "#333",
-        fontSize: 13,
-        fontFamily: "Poppins-Medium",
     },
 
     aboutText: {
@@ -475,104 +449,31 @@ const styles = StyleSheet.create({
         paddingHorizontal: 18,
     },
 
-    dateBox: {
+    dateCard: {
         width: "48%",
         backgroundColor: "#FFF",
-        borderRadius: 16,
-        padding: 16,
-        elevation: 2,
+        borderRadius: 18,
+        padding: 10,
+        borderWidth: 1,
+        borderColor: "#eee",
     },
-
 
     dateLabel: {
         color: "#888",
         fontSize: 13,
-        textAlign: "left",
         fontFamily: "Poppins-Regular",
     },
 
     dateRow: {
-        width: "100%",
+        marginTop: 10,
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
     },
 
-
     dateValue: {
-        marginTop: 8,
-        color: "#888",
+        color: "#222",
         fontSize: 13,
-        fontFamily: "Poppins-Regular",
-    },
-
-    dateMainContainer: {
-        width: "30%",
-        alignItems: "center",
-    },
-
-    dateCard: {
-        width: "48%",
-        backgroundColor: "#FFF",
-        borderRadius: 18,
-        padding: 16,
-        alignItems: "flex-start",
-        borderWidth: 1,
-        borderColor: "#eee"
-    },
-
-    iconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: "#FFF5E8",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 10,
-    },
-
-    amenityCard: {
-        width: 70,
-        height: 70,
-        backgroundColor: "#FFF",
-        borderRadius: 15,
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 1,
-        borderColor: "#eee",
-    },
-
-    guestCard: {
-        width: 70,
-        height: 70,
-        backgroundColor: "#FFF",
-        borderRadius: 15,
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 1,
-        borderColor: "#eee"
-    },
-
-    guestIconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: "rgba(255,255,255,0.2)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    guestLabel: {
-        color: "rgba(255,255,255,0.8)",
-        fontSize: 12,
-        fontFamily: "Poppins-Regular",
-    },
-
-    guestValue: {
-        marginTop: 10,
-        color: "#777",
-        fontSize: 13,
-        textAlign: "center",
         fontFamily: "Poppins-SemiBold",
     },
 
@@ -583,6 +484,8 @@ const styles = StyleSheet.create({
         right: 0,
         backgroundColor: "#FFF",
         padding: 18,
+        borderTopWidth: 1,
+        borderTopColor: "#eee",
     },
 
     bookNowBtn: {

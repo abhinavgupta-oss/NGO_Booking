@@ -10,6 +10,7 @@ import {
     StatusBar,
     FlatList,
     Image,
+    Modal,
 } from "react-native";
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
@@ -17,536 +18,572 @@ import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { useNavigation } from "@react-navigation/native";
 import { DevoteemyDonation } from "../../../Services/Devotee/DevoteeServices";
 import { Icons } from "../../../utility/utility";
+import WebView from "react-native-webview";
 import { DevoteeInVoiceDetails } from "../../../Services/Donation/DonationService";
 import { colors } from "../../../utility/AppTheam";
+import CommonHeader from "../../../Component/Header/CommonHeader";
+import { useTheme } from "../../../utility/AppTheam/ThemeContext";
+import CustomeLoading from "../../../Component/Loading/CustomeLoading";
+import { useDonationStore } from "../../../Stores/useDonationStore";
 
 const MyDonationScreen = ({ route }) => {
 
     const navigation = useNavigation();
-    const [donationList, setDonationList] = useState([]);
+    const [InvoiceUrl, setInvoiceURL] = useState("");
+    const [InvoiceModel, setInvoiceModel] = useState(false)
+    const [pageNumber, setPageNumber] = useState(1);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMoreData, setHasMoreData] = useState(true);
     const { userId } = route.params || "";
+    const [refreshing, setRefreshing] = useState(false);
+    const { MydonationList, loading, fetchMyDonationList } = useDonationStore();
+
+
+    const { colors, darkMode, toggleTheme } = useTheme();
+    const styles = createStyles(colors);
 
     useEffect(() => {
-        const fetchDonationData = async () => {
-            try {
-                const FormDonation = {
-                    "eUserId": userId,
-                }
+        fetchDonationData(1, false);
+    }, []);
 
-                const respDonation = await DevoteemyDonation(FormDonation)
-                setDonationList(respDonation?.result)
-                console.log("respDonation", respDonation)
-
-            } catch (error: any) {
-                console.log("Donation Error", error);
+    const fetchDonationData = async (
+        page = 1,
+        isLoadMore = false,
+    ) => {
+        try {
+            if (isLoadMore) {
+                setIsLoadingMore(true);
             }
-        };
 
-        fetchDonationData();
-    }, [userId]);
+            const payload = {
+                pageNumber: page,
+                pageSize: 10,
+                eUserId: userId,
+            };
 
-    const handelInvoice = async(url:any)=> {
-    try {
+            const response = await fetchMyDonationList(
+                payload,
+                isLoadMore,
+            );
 
-        const paymentId = url.split("/").pop();
-        const respInvoice = await DevoteeInVoiceDetails(paymentId)
-        // console.log("respInvoice",respInvoice)
-        navigation.navigate("DevoteeReceipt", { InvoiceDetails: respInvoice?.result })
+            const newData = response?.result || [];
 
-    } catch (error: any) {
-        console.log("Invoice Error", error);
+            setHasMoreData(newData.length === 10);
+
+        } catch (error) {
+            console.log(
+                "Donation Error =>",
+                error,
+            );
+        } finally {
+            setIsLoadingMore(false);
+            setRefreshing(false);
+        }
+    };
+
+    const handelInvoice = async (url: any) => {
+        try {
+
+            const paymentId = url.split("/").pop();
+            const respInvoice = await DevoteeInVoiceDetails(paymentId)
+            // console.log("respInvoice",respInvoice)
+            navigation.navigate("DevoteeReceipt", { InvoiceDetails: respInvoice?.result })
+
+        } catch (error: any) {
+
+        }
     }
-}
 
 
-// renderDonationItem
+    const onRefresh = async () => {
+        setRefreshing(true);
 
-const renderDonationItem = ({
-    item,
-}: any) => {
+        setPageNumber(1);
+        setHasMoreData(true);
 
-    const isSuccess =
-        item?.paymentStatusName ===
-        "Success";
+        await fetchDonationData(
+            1,
+            false,
+        );
+    };
 
-    return (
-        <View
-            // activeOpacity={0.85}
-            style={styles.card}
-        >
-            {/* TOP */}
+    const loadMore = () => {
+        if (
+            loading ||
+            isLoadingMore ||
+            !hasMoreData
+        ) {
+            return;
+        }
 
-            <View style={styles.cardTop}>
-                <View style={{ flex: 1 }}>
-                    <Text
+        const nextPage =
+            pageNumber + 1;
+
+        setPageNumber(nextPage);
+
+        fetchDonationData(
+            nextPage,
+            true,
+        );
+    };
+    // renderDonationItem
+
+    const renderDonationItem = ({
+        item,
+    }: any) => {
+
+        const isSuccess =
+            item?.paymentStatusName ===
+            "Success";
+
+        return (
+            <View
+                // activeOpacity={0.85}
+                style={styles.card}
+            >
+                {/* TOP */}
+
+                <View style={styles.cardTop}>
+                    <View style={{ flex: 1 }}>
+                        <Text
+                            style={
+                                styles.receiptNo
+                            }
+                        >
+                            Receipt No
+                        </Text>
+
+                        <Text
+                            style={
+                                styles.receiptValue
+                            }
+                        >
+                            {
+                                item?.receiptNumber
+                            }
+                        </Text>
+                    </View>
+
+                    <View
                         style={
-                            styles.receiptNo
+                            styles.amountBox
                         }
                     >
-                        Receipt No
-                    </Text>
-
-                    <Text
-                        style={
-                            styles.receiptValue
-                        }
-                    >
-                        {
-                            item?.receiptNumber
-                        }
-                    </Text>
+                        <Text
+                            style={
+                                styles.amount
+                            }
+                        >
+                            ₹{item?.amount}
+                        </Text>
+                    </View>
                 </View>
+
+                {/* STATUS */}
 
                 <View
-                    style={
-                        styles.amountBox
-                    }
-                >
-                    <Text
-                        style={
-                            styles.amount
-                        }
-                    >
-                        ₹{item?.amount}
-                    </Text>
-                </View>
-            </View>
-
-            {/* STATUS */}
-
-            <View
-                style={[
-                    styles.statusBox,
-                    {
-                        backgroundColor:
-                            isSuccess
-                                ? "#E8F8EE"
-                                : "#FFF1F1",
-                    },
-                ]}
-            >
-                <MaterialIcons
-                    name={
-                        isSuccess
-                            ? "check-circle"
-                            : "cancel"
-                    }
-                    size={18}
-                    color={
-                        isSuccess
-                            ? "#2AA84A"
-                            : "#E53935"
-                    }
-                />
-
-                <Text
                     style={[
-                        styles.statusText,
+                        styles.statusBox,
                         {
-                            color:
+                            backgroundColor:
                                 isSuccess
-                                    ? "#2AA84A"
-                                    : "#E53935",
+                                    ? "#E8F8EE"
+                                    : "#FFF1F1",
                         },
                     ]}
                 >
-                    {
-                        item?.paymentStatusName
-                    }
-                </Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            {/* DETAILS */}
-
-            <View style={styles.infoRow}>
-                <Text style={styles.label}>
-                    Seva
-                </Text>
-
-                <Text style={styles.value}>
-                    {item?.sevaName}
-                </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-                <Text style={styles.label}>
-                    Payment Date
-                </Text>
-
-                <Text style={styles.value}>
-                    {
-                        item?.paymentDate
-                    }
-                </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-                <Text style={styles.label}>
-                    Payment Type
-                </Text>
-
-                <Text style={styles.value}>
-                    {
-                        item?.paymentTypeName
-                    }
-                </Text>
-            </View>
-
-            <View style={styles.infoRow}>
-                <Text style={styles.label}>
-                    Mobile
-                </Text>
-
-                <Text style={styles.value}>
-                    {
-                        item?.userMobile
-                    }
-                </Text>
-            </View>
-
-            {/* BUTTONS */}
-
-            <View style={styles.actionRow}>
-                <TouchableOpacity
-                    style={
-                        styles.receiptBtn
-                    }
-                    onPress={() => {handelInvoice(item?.uiBasePath) }}
-                >
                     <MaterialIcons
-                        name="receipt-long"
+                        name={
+                            isSuccess
+                                ? "check-circle"
+                                : "cancel"
+                        }
                         size={18}
-                        color="#FFF"  
+                        color={
+                            isSuccess
+                                ? "#2AA84A"
+                                : "#E53935"
+                        }
                     />
 
                     <Text
-                        style={
-                            styles.receiptBtnText
-                        }
+                        style={[
+                            styles.statusText,
+                            {
+                                color:
+                                    isSuccess
+                                        ? "#2AA84A"
+                                        : "#E53935",
+                            },
+                        ]}
                     >
-                        View Receipt
+                        {
+                            item?.paymentStatusName
+                        }
                     </Text>
-                </TouchableOpacity>
+                </View>
 
-                <TouchableOpacity
-                    style={styles.shareBtn}
-                >
-                    <MaterialIcons
-                        name="share"
-                        size={18}
-                        color="#FFF"
-                    />
-                </TouchableOpacity>
+                <View style={styles.divider} />
+
+                {/* DETAILS */}
+
+                <View style={styles.infoRow}>
+                    <Text style={styles.label}>
+                        Seva
+                    </Text>
+
+                    <Text style={styles.value}>
+                        {item?.sevaName}
+                    </Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                    <Text style={styles.label}>
+                        Payment Date
+                    </Text>
+
+                    <Text style={styles.value}>
+                        {
+                            item?.paymentDate
+                        }
+                    </Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                    <Text style={styles.label}>
+                        Payment Type
+                    </Text>
+
+                    <Text style={styles.value}>
+                        {
+                            item?.paymentTypeName
+                        }
+                    </Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                    <Text style={styles.label}>
+                        Mobile
+                    </Text>
+
+                    <Text style={styles.value}>
+                        {
+                            item?.userMobile
+                        }
+                    </Text>
+                </View>
+
+                {/* BUTTONS */}
+
+                <View style={styles.actionRow}>
+                    <TouchableOpacity
+                        style={
+                            styles.receiptBtn
+                        }
+                        onPress={() => { handelInvoice(item?.uiBasePath) }}
+                    >
+                        <MaterialIcons
+                            name="receipt-long"
+                            size={18}
+                            color="#FFF"
+                        />
+
+                        <Text
+                            style={
+                                styles.receiptBtnText
+                            }
+                        >
+                            View Receipt
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.shareBtn}
+                    >
+                        <MaterialIcons
+                            name="share"
+                            size={18}
+                            color="#FFF"
+                        />
+                    </TouchableOpacity>
+                </View>
             </View>
+        );
+    };
+
+    return (
+        <View style={styles.container}>
+            <StatusBar
+                backgroundColor="#F5F6FA"
+                barStyle="dark-content"
+            />
+
+            {/* HEADER */}
+            <CommonHeader title="My Donation" />
+
+            {/* LIST */}
+
+            <FlatList
+                data={MydonationList}
+                renderItem={renderDonationItem}
+                keyExtractor={(item, index) =>
+                    `${item?.id || index}`
+                }
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                    padding: 16,
+                    paddingBottom: 40,
+                    flexGrow: 1,
+                }} 
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                onEndReached={loadMore}
+                onEndReachedThreshold={0.3}
+                removeClippedSubviews
+                initialNumToRender={10}
+                maxToRenderPerBatch={10}
+                windowSize={10}
+                ListFooterComponent={
+                    isLoadingMore ? (
+                        <View
+                            style={{
+                                paddingVertical: 20,
+                                alignItems: "center",
+                            }}
+                        >
+                            <Text>
+                                Loading More...
+                            </Text>
+                        </View>
+                    ) : null
+                }
+                ListEmptyComponent={
+                    !loading ? (
+                        <View
+                            style={styles.emptyContainer}
+                        >
+                            <MaterialIcons
+                                name="volunteer-activism"
+                                size={90}
+                                color="#D0D5DD"
+                            />
+
+                            <Text
+                                style={styles.emptyTitle}
+                            >
+                                No Donations Yet
+                            </Text>
+
+                            <Text
+                                style={
+                                    styles.emptySubTitle
+                                }
+                            >
+                                Your donation history
+                                will appear here
+                            </Text>
+                        </View>
+                    ) : null
+                }
+            />
+
+            <CustomeLoading isLoading={loading} />
+
         </View>
     );
 };
 
-return (
-    <View style={styles.container}>
-        <StatusBar
-            backgroundColor="#F5F6FA"
-            barStyle="dark-content"
-        />
-
-        {/* HEADER */}
-
-        <View style={styles.headerRow}>
-            <TouchableOpacity
-                onPress={() => navigation.goBack()}
-                style={styles.backButton}
-            >
-                <Image
-                    source={Icons.LeftSolid}
-                    style={styles.backIcon}
-                />
-            </TouchableOpacity>
-
-            <Text style={styles.headerText}>
-                Donation
-            </Text>
-
-            <View style={{ width: 45 }} />
-        </View>
-
-        {/* LIST */}
-
-        <FlatList
-            data={donationList}
-            keyExtractor={(
-                item,
-                index,
-            ) => index.toString()}
-            renderItem={
-                renderDonationItem
-            }
-            showsVerticalScrollIndicator={
-                false
-            }
-            contentContainerStyle={{
-                padding: 16,
-                paddingBottom: 40,
-                flexGrow: 1,
-            }}
-            ListEmptyComponent={
-                <View
-                    style={
-                        styles.emptyContainer
-                    }
-                >
-                    <MaterialIcons
-                        name="volunteer-activism"
-                        size={90}
-                        color="#D0D5DD"
-                    />
-
-                    <Text
-                        style={
-                            styles.emptyTitle
-                        }
-                    >
-                        No Donations Yet
-                    </Text>
-
-                    <Text
-                        style={
-                            styles.emptySubTitle
-                        }
-                    >
-                        Your donation history
-                        will appear here
-                    </Text>
-                </View>
-            }
-        />
-    </View>
-);
-};
-
 export default MyDonationScreen;
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#F5F6FA",
-    },
 
+const createStyles = (colors: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
 
-    headerRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 18,
-        paddingVertical: 15,
-        backgroundColor: "#FFF",
-        elevation: 2,
-    },
+        card: {
+            backgroundColor: colors.card,
+            borderRadius: 18,
+            padding: 16,
+            marginBottom: 16,
+            elevation: 3,
+        },
 
-    backButton: {
-        width: 45,
-        height: 45,
-        borderRadius: 22,
-        backgroundColor: "#FFF4EC",
-        justifyContent: "center",
-        alignItems: "center",
-    },
+        cardTop: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+        },
 
-    backIcon: {
-        width: 20,
-        height: 20,
-        resizeMode: "contain",
-    },
+        receiptNo: {
+            fontSize: 13,
+            color: colors.text,
+        },
 
-    headerText: {
-        fontSize: 20,
-        color: "#111",
-        fontFamily: "Poppins-SemiBold",
-    },
+        receiptValue: {
+            marginTop: 4,
+            fontSize: 15,
+            fontWeight: "700",
+            color: colors.text,
+        },
 
-    card: {
-        backgroundColor: "#FFF",
-        borderRadius: 18,
-        padding: 16,
-        marginBottom: 16,
-        elevation: 3,
-    },
+        amountBox: {
+            backgroundColor: "#FFF3E8",
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            borderRadius: 12,
+        },
 
-    cardTop: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
+        amount: {
+            fontSize: 20,
+            fontWeight: "700",
+            color: colors.primary,
+        },
 
-    receiptNo: {
-        fontSize: 13,
-        color: "#666",
-    },
+        divider: {
+            height: 1,
+            backgroundColor: "#EEE",
+            marginVertical: 16,
+        },
 
-    receiptValue: {
-        marginTop: 4,
-        fontSize: 15,
-        fontWeight: "700",
-        color: "#111",
-    },
+        infoRow: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 10,
+        },
 
-    amountBox: {
-        backgroundColor: "#FFF3E8",
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 12,
-    },
+        label: {
+            fontSize: 14,
+            color: colors.text,
+        },
 
-    amount: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: colors.primary,
-    },
+        value: {
+            fontSize: 14,
+            color: colors.text,
+            fontWeight: "600",
+        },
 
-    divider: {
-        height: 1,
-        backgroundColor: "#EEE",
-        marginVertical: 16,
-    },
+        viewBtn: {
+            marginTop: 12,
+            height: 48,
+            borderRadius: 14,
+            backgroundColor: colors.primary,
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+        },
 
-    infoRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 10,
-    },
+        viewBtnText: {
+            color: "#FFF",
+            fontSize: 15,
+            fontWeight: "700",
+            marginLeft: 8,
+        },
 
-    label: {
-        fontSize: 14,
-        color: "#666",
-    },
+        emptyContainer: {
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            marginTop: 120,
+        },
 
-    value: {
-        fontSize: 14,
-        color: "#111",
-        fontWeight: "600",
-    },
+        emptyTitle: {
+            marginTop: 20,
+            fontSize: 22,
+            fontWeight: "700",
+            color: "#111",
+        },
 
-    viewBtn: {
-        marginTop: 12,
-        height: 48,
-        borderRadius: 14,
-        backgroundColor: colors.primary,
+        emptySubTitle: {
+            marginTop: 8,
+            fontSize: 15,
+            color: "#777",
+            textAlign: "center",
+            lineHeight: 22,
+        },
 
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-    },
+        statusBox: {
+            marginTop: 14,
+            alignSelf: "flex-start",
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 30,
+        },
 
-    viewBtnText: {
-        color: "#FFF",
-        fontSize: 15,
-        fontWeight: "700",
-        marginLeft: 8,
-    },
+        statusText: {
+            marginLeft: 6,
+            fontSize: 13,
+            fontWeight: "700",
+        },
 
-    emptyContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        marginTop: 120,
-    },
+        actionRow: {
+            flexDirection: "row",
+            marginTop: 16,
+        },
 
-    emptyTitle: {
-        marginTop: 20,
-        fontSize: 22,
-        fontWeight: "700",
-        color: "#111",
-    },
+        receiptBtn: {
+            flex: 1,
+            height: 48,
+            borderRadius: 14,
+            backgroundColor: colors.primary,
 
-    emptySubTitle: {
-        marginTop: 8,
-        fontSize: 15,
-        color: "#777",
-        textAlign: "center",
-        lineHeight: 22,
-    },
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+        },
 
-    statusBox: {
-        marginTop: 14,
-        alignSelf: "flex-start",
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 30,
-    },
+        receiptBtnText: {
+            color: "#FFF",
+            fontSize: 15,
+            fontWeight: "700",
+            marginLeft: 8,
+        },
 
-    statusText: {
-        marginLeft: 6,
-        fontSize: 13,
-        fontWeight: "700",
-    },
+        shareBtn: {
+            width: 48,
+            height: 48,
+            borderRadius: 14,
+            backgroundColor: "#2AA84A",
+            justifyContent: "center",
+            alignItems: "center",
+            marginLeft: 10,
+        },
+        modalContainer: {
+            flex: 1,
+            backgroundColor: "#FFF",
+        },
 
-    actionRow: {
-        flexDirection: "row",
-        marginTop: 16,
-    },
+        modalHeader: {
+            height: 90,
+            backgroundColor: colors.primary,
 
-    receiptBtn: {
-        flex: 1,
-        height: 48,
-        borderRadius: 14,
-        backgroundColor: colors.primary,
+            flexDirection: "row",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
 
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-    },
+            paddingHorizontal: 18,
+            paddingBottom: 14,
+        },
 
-    receiptBtnText: {
-        color: "#FFF",
-        fontSize: 15,
-        fontWeight: "700",
-        marginLeft: 8,
-    },
+        modalTitle: {
+            fontSize: 20,
+            color: "#FFF",
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    shareBtn: {
-        width: 48,
-        height: 48,
-        borderRadius: 14,
-        backgroundColor: "#2AA84A",
-        justifyContent: "center",
-        alignItems: "center",
-        marginLeft: 10,
-    },
-    modalContainer: {
-        flex: 1,
-        backgroundColor: "#FFF",
-    },
+        closeButton: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
 
-    modalHeader: {
-        height: 90,
-        backgroundColor: colors.primary,
+            backgroundColor:
+                "rgba(255,255,255,0.25)",
 
-        flexDirection: "row",
-        alignItems: "flex-end",
-        justifyContent: "space-between",
-
-        paddingHorizontal: 18,
-        paddingBottom: 14,
-    },
-
-    modalTitle: {
-        fontSize: 20,
-        color: "#FFF",
-        fontFamily: "Poppins-SemiBold",
-    },
-
-    closeButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-
-        backgroundColor:
-            "rgba(255,255,255,0.25)",
-
-        justifyContent: "center",
-        alignItems: "center",
-    },
-});
+            justifyContent: "center",
+            alignItems: "center",
+        },
+    });

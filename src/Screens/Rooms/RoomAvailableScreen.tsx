@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -8,79 +8,271 @@ import {
     StatusBar,
     Image,
     TextInput,
-    Modal
+    Modal,
+    Pressable,
+    FlatList
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { useNavigation } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
-
-
-
-const roomTypes = [
-    "AC",
-    "Non AC",
-    "Family Room",
-    "Dormitory",
-];
-
-const roomList = [
-    {
-        id: 1,
-        title: "AC Room",
-        price: "₹1200 / Night",
-        image:
-            "https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=1200&auto=format&fit=crop",
-    },
-    {
-        id: 2,
-        title: "Family Room",
-        price: "₹2000 / Night",
-        image:
-            "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=1200&auto=format&fit=crop",
-    },
-    {
-        id: 3,
-        title: "Non-AC Room",
-        price: "₹2500 / Night",
-        image:
-            "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1200&auto=format&fit=crop",
-    },
-
-];
+import { getRoomTypes } from "../../Services/Booking/BookingService";
+import AppEnvironment from "../../utility/AppEnvironment";
+import { useBookingStore } from "../../Stores/useBookingStore";
+import CustomeLoading from "../../Component/Loading/CustomeLoading";
+import CustomCalendar from "../../Component/formComponent/CustomCalendar";
+import CommonHeader from "../../Component/Header/CommonHeader";
+import { parseDDMMYYYY } from "../../Helper/HtmlTagHelper";
+import { useTheme } from "../../utility/AppTheam/ThemeContext";
 
 
 
 const RoomAvailableScreen = () => {
 
-    const [beds, setBeds] = useState(1);
+    const { roomList, loading, fetchRoomList, } = useBookingStore();
 
-    const [maxGuests, setMaxGuests] = useState(2);
-
-    const [selectedRoomType, setSelectedRoomType] = useState<string[]>([]);
-
+    const [roomTypes, setRoomTypes] = useState<any[]>([]);
+    const [searchText, setSearchText] = useState("");
+    const [checkInDate, setCheckInDate] = useState<Date | null>(null);
+    const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
+    const [beds, setBeds] = useState(0);
+    const [maxGuests, setMaxGuests] = useState(0);
+    const [selectedRoomType, setSelectedRoomType] = useState<number | null>(null);
     const [showFilter, setShowFilter] = useState(false);
+    const [checkInPicker, setCheckInPicker] = useState(false);
+    const [checkOutPicker, setCheckOutPicker] = useState(false);
+    const { colors, darkMode, toggleTheme } = useTheme();
+    const styles = createStyles(colors);
+
     const navigation = useNavigation();
 
-    const handleRoomType = (type: string) => {
+    useEffect(() => {
+        if (checkInDate && checkOutDate && maxGuests) {
+            getRooms();
+        }
+    }, [checkInDate, checkOutDate, selectedRoomType]);
 
-        if (selectedRoomType.includes(type)) {
+    useEffect(() => {
+        getAllRoomTypes();
+    }, []);
 
-            setSelectedRoomType(
-                selectedRoomType.filter(
-                    item => item !== type
-                )
-            );
 
-        } else {
+    const getRooms = async () => {
+        try {
+            const payload = {
 
-            setSelectedRoomType([
-                ...selectedRoomType,
-                type,
-            ]);
+                ...(maxGuests > 0 && { maxGuests }),
+                ...(beds > 0 && { numberOfBeds: beds }),
+                ...(selectedRoomType && { roomTypeId: selectedRoomType }),
+                ...(searchText?.trim() && { search: searchText.trim() }),
+                branchCode: AppEnvironment.BRANCH_CODE,
+                statusId: 1,
+            };
+
+            console.log("PAYLOAD => ", payload);
+            await fetchRoomList(payload);
+
+        } catch (error) {
+            console.log(error);
         }
     };
+
+    const getAllRoomTypes = async () => {
+
+        try {
+            const result = await getRoomTypes();
+            console.log(
+                "Room Types in Screen:",
+                result?.result
+            )
+
+            if (result?.result) {
+                setRoomTypes(result.result);
+            }
+
+        } catch (error) {
+
+            console.log(error);
+        }
+    };
+
+    const resetFilters = async () => {
+
+        setBeds(0);
+        setMaxGuests(0);
+        setSelectedRoomType(null);
+        setSearchText("");
+
+        await fetchRoomList({
+            branchCode: AppEnvironment.BRANCH_CODE,
+        });
+        setShowFilter(false);
+    };
+
+    const handleRoomType = (id: number) => {
+        setSelectedRoomType(id);
+    };
+
+    const roomAvailable = {
+        checkIn: checkInDate,
+        checkOut: checkOutDate,
+        guests: maxGuests,
+    }
+
+    console.log("roomTypes", roomTypes)
+
+    const renderRoomItem = ({ item }: any) => (
+        <View style={styles.roomCard}>
+            <LinearGradient
+                colors={[colors.Linearcard1, colors.Linearcard2]}
+                style={styles.roomGradient}
+            >
+                <Image
+                    source={{
+                        uri:
+                            item.imageUrl ||
+                            "https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=1200&auto=format&fit=crop",
+                    }}
+                    style={styles.roomImage}
+                />
+
+                <View style={styles.roomContent}>
+                    <View style={styles.topRow}>
+                        <Text
+                            numberOfLines={1}
+                            style={styles.roomTitle}
+                        >
+                            {item.roomTypeName}
+                        </Text>
+
+                        {item.discount > 0 && (
+                            <View style={styles.discountBadge}>
+                                <Text style={styles.discountText}>
+                                    {item.discount}% OFF
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+
+                    <View style={styles.facilityRow}>
+                        <View style={styles.facilityItem}>
+                            <MaterialIcons
+                                name="person"
+                                size={14}
+                                color="#777"
+                            />
+
+                            <Text style={styles.facilityText}>
+                                {item.maxGuests} Guests
+                            </Text>
+                        </View>
+
+                        <View style={styles.facilityItem}>
+                            <MaterialIcons
+                                name="bed"
+                                size={14}
+                                color="#777"
+                            />
+                            <Text style={styles.facilityText}>
+                                {item.numberOfBeds} Beds
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.amenitiesContainer}>
+                        {item.amenities
+                            ?.slice(0, 2)
+                            .map((amenity: any, i: number) => (
+                                <View
+                                    key={i}
+                                    style={styles.amenityChip}
+                                >
+                                    <MaterialIcons
+                                        name={
+                                            amenity.icon ||
+                                            "check-circle"
+                                        }
+                                        size={12}
+                                        color={colors.primary}
+                                    />
+
+                                    <Text
+                                        numberOfLines={1}
+                                        style={styles.amenityText}
+                                    >
+                                        {amenity.name}
+                                    </Text>
+                                </View>
+                            ))}
+                    </View>
+
+                    <View style={styles.priceRow}>
+                        <View style={styles.priceContainer}>
+                            {item.discount > 0 && (
+                                <Text style={styles.oldPrice}>
+                                    ₹{item.totalPrice}
+                                </Text>
+                            )}
+
+                            <Text style={styles.priceText}>
+                                ₹{item.finalPrice}
+                            </Text>
+
+                            <Text style={styles.perNight}>
+                                /Night
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity
+                            style={styles.bookNowBtn}
+                            onPress={() =>
+                                navigation.navigate(
+                                    "CreateBookingScreen",
+                                    {
+                                        bookingData: roomAvailable,
+                                        roomId: item.id,
+                                    },
+                                )
+                            }
+                        >
+                            <Text style={styles.bookNowText}>
+                                Book Now
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.viewDetailsBtn}
+                            onPress={() =>
+                                navigation.navigate(
+                                    "RoomDetailsScreen",
+                                    {
+                                        roomAvailable,
+                                        roomId: item.id,
+                                    },
+                                )
+                            }
+                        >
+                            <Text style={styles.viewDetailsText}>
+                                View Details
+                            </Text>
+
+                            <MaterialIcons
+                                name="arrow-forward-ios"
+                                size={12}
+                                color={colors.primary}
+                            />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </LinearGradient>
+        </View>
+    );
+
+
+
 
     return (
         <View style={styles.container}>
@@ -91,38 +283,7 @@ const RoomAvailableScreen = () => {
             />
 
             {/* ================= HEADER ================= */}
-
-            <LinearGradient
-                colors={[colors.primary, "#F59E0B"]}
-                style={styles.header}
-            >
-
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => navigation.goBack()}
-                    style={styles.backBtn}
-                >
-                    <MaterialIcons
-                        name="arrow-back"
-                        size={24}
-                        color="#FFF"
-                    />
-                </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>
-                    Room Available
-                </Text>
-
-                <TouchableOpacity style={styles.filterTopBtn}>
-                    <MaterialIcons
-                        name="tune"
-                        size={22}
-                        color="#FFF"
-                    />
-                </TouchableOpacity>
-
-            </LinearGradient>
-
+            <CommonHeader title="Room Available" />
             {/* ================= BODY ================= */}
 
             <ScrollView
@@ -134,59 +295,86 @@ const RoomAvailableScreen = () => {
 
                 <View style={styles.dateMainContainer}>
 
-                    <View style={styles.dateCard}>
-                        <MaterialIcons
-                            name="calendar-month"
-                            color={colors.primary}
-                            size={22}
-                        />
+                    <Pressable style={styles.dateCard} onPress={() => {
+                        setCheckInPicker(true);
+                        setCheckOutPicker(false);
+                    }}>
 
-                        <View style={{ marginLeft: 10 }}>
-                            <Text style={styles.dateLabel}>
-                                Check In
-                            </Text>
+                        <Text style={styles.dateLabel}>
+                            Check In
+                        </Text>
 
+                        <View style={{ width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }} >
+                            <MaterialIcons
+                                name="calendar-month"
+                                color={colors.icon}
+                                size={15}
+                            />
                             <Text style={styles.dateValue}>
-                                20 May 2024
+                                {checkInDate ? checkInDate : "Select Date"}
                             </Text>
                         </View>
-                    </View>
+                    </Pressable>
 
-                    <View style={styles.dateCard}>
-                        <MaterialIcons
-                            name="calendar-month"
-                            color={colors.primary}
-                            size={22}
-                        />
-
-                        <View style={{ marginLeft: 10 }}>
-                            <Text style={styles.dateLabel}>
-                                Check Out
-                            </Text>
-
+                    <Pressable style={styles.dateCard} onPress={() => {
+                        setCheckInPicker(false);
+                        setCheckOutPicker(true);
+                    }}>
+                        <Text style={styles.dateLabel}>
+                            Check Out
+                        </Text>
+                        <View style={{ width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }} >
+                            <MaterialIcons
+                                name="calendar-month"
+                                color={colors.icon}
+                                size={15}
+                            />
                             <Text style={styles.dateValue}>
-                                22 May 2024
+                                {checkOutDate ? checkOutDate : "Select Date"}
                             </Text>
                         </View>
-                    </View>
+                    </Pressable>
 
-                    <View style={styles.dateCard}>
-                        <MaterialIcons
-                            name="person-outline"
-                            color={colors.primary}
-                            size={22}
-                        />
-
-                        <View style={{ marginLeft: 10 }}>
-                            <Text style={styles.dateLabel}>
-                                Guests
-                            </Text>
-
-                            <Text style={styles.dateValue}>
-                                2 Guests
-                            </Text>
+                    <Pressable style={styles.dateCard} onPress={() => {
+                        setShowFilter(true)
+                    }}>
+                        <Text style={styles.dateLabel}>
+                            Guests
+                        </Text>
+                        <View style={{ width: "100%", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" }} >
+                            <MaterialIcons
+                                name="person-outline"
+                                color={colors.icon}
+                                size={18}
+                            />
+                            <TextInput
+                                style={{
+                                    flex: 1,
+                                    marginLeft: 5,
+                                    fontSize: 12,
+                                    color: "#222",
+                                    fontFamily: "Poppins-SemiBold",
+                                    paddingVertical: 0,
+                                }}
+                                value={maxGuests}
+                                placeholder="Guests"
+                                keyboardType="number-pad"
+                                placeholderTextColor="#999"
+                                returnKeyType="search"
+                                onChangeText={setMaxGuests}
+                                onBlur={() => {
+                                    if (
+                                        checkInDate &&
+                                        checkOutDate &&
+                                        maxGuests > 0
+                                    ) {
+                                        getRooms();
+                                    }
+                                }}
+                            />
                         </View>
-                    </View>
+                    </Pressable>
+
 
                 </View>
 
@@ -194,701 +382,609 @@ const RoomAvailableScreen = () => {
 
                 <View style={styles.searchContainer}>
 
-                    <View style={styles.searchBox}>
-                        <MaterialIcons
-                            name="search"
-                            size={22}
-                            color="#999"
-                        />
+                    <FlatList
+                        horizontal
+                        data={roomTypes}
+                        keyExtractor={(item) => item.id.toString()}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ paddingHorizontal: 10 }}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                onPress={() =>
+                                    setSelectedRoomType(item.id)
+                                }
+                                style={[
+                                    styles.roomTypeItem,
+                                    selectedRoomType === item.id &&
+                                    styles.selectedRoomTypeItem,
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        styles.roomTypeText,
+                                        selectedRoomType === item.id &&
+                                        styles.selectedRoomTypeText,
+                                    ]}
+                                >
+                                    {item.name}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    />
 
-                        <TextInput
-                            placeholder="Search Room or Type..."
-                            placeholderTextColor="#999"
-                            style={styles.input}
-                        />
-                    </View>
+                    {(checkInDate &&
+                        checkOutDate &&
+                        maxGuests > 0) && (
+                            <TouchableOpacity onPress={() => {
+                                setCheckInDate(null)
+                                setCheckOutDate(null)
+                                setMaxGuests(0)
+                                setSelectedRoomType(null)
 
-                    <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
-                        <MaterialIcons
-                            name="tune"
-                            size={20}
-                            color={colors.primary}
-                        />
-
-                        <Text style={styles.filterText}>
-                            Filter
-                        </Text>
-                    </TouchableOpacity>
-
+                            }}>
+                                <MaterialIcons name="clear" size={20} />
+                            </TouchableOpacity>
+                        )}
                 </View>
 
                 {/* ================= ROOM LIST ================= */}
 
-                {roomList.map((item) => (
 
-                    <TouchableOpacity
-                        key={item.id}
-                        activeOpacity={0.8}
-                        style={styles.roomCard}
-                    >
-
-                        <LinearGradient
-                            colors={["#FFFFFF", "#FFF7ED"]}
-                            style={styles.roomGradient}
-                        >
-
-                            <Image
-                                source={{ uri: item.image }}
-                                style={styles.roomImage}
-                            />
-
-                            <View style={styles.roomContent}>
-
-                                <Text style={styles.roomTitle}>
-                                    {item.title}
-                                </Text>
-
-                                {/* FACILITIES */}
-
-                                <View style={styles.facilityRow}>
-
-                                    <View style={styles.facilityItem}>
-                                        <MaterialIcons
-                                            name="person"
-                                            size={15}
-                                            color="#777"
-                                        />
-
-                                        <Text style={styles.facilityText}>
-                                            2 Guests
-                                        </Text>
-                                    </View>
-
-                                    <View style={styles.facilityItem}>
-                                        <MaterialIcons
-                                            name="ac-unit"
-                                            size={15}
-                                            color="#777"
-                                        />
-
-                                        <Text style={styles.facilityText}>
-                                            AC
-                                        </Text>
-                                    </View>
-
-                                    <View style={styles.facilityItem}>
-                                        <MaterialIcons
-                                            name="wifi"
-                                            size={15}
-                                            color="#777"
-                                        />
-
-                                        <Text style={styles.facilityText}>
-                                            WiFi
-                                        </Text>
-                                    </View>
-
-                                    <View style={styles.facilityItem}>
-                                        <MaterialIcons
-                                            name="tv"
-                                            size={15}
-                                            color="#777"
-                                        />
-
-                                        <Text style={styles.facilityText}>
-                                            TV
-                                        </Text>
-                                    </View>
-
-                                </View>
-
-                                <Text style={styles.priceText}>
-                                    {item.price}
-                                </Text>
-
-
-
-                                <View style={styles.buttonRow}>
-
-                                    <TouchableOpacity
-                                        style={styles.bookNowBtn} onPress={() =>
-                                            navigation.navigate("CreateBookingScreen")
-                                        }
-                                    >
-                                        <Text style={styles.bookNowText}>
-                                            Book Now
-                                        </Text>
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        style={styles.viewDetailsBtn} onPress={() =>
-                                            navigation.navigate("RoomDetailsScreen", {
-                                                room: item
-                                            })
-                                        }
-                                    >
-                                        <Text style={styles.viewDetailsText}>
-                                            View Details
-                                        </Text>
-
-                                        <MaterialIcons
-                                            name="arrow-forward-ios"
-                                            size={14}
-                                            color={colors.primary}
-                                        />
-                                    </TouchableOpacity>
-
-                                </View>
-
-                            </View>
-
-                        </LinearGradient>
-
-                    </TouchableOpacity>
-                ))}
-
-            </ScrollView>
-
-            <Modal
-                visible={showFilter}
-                transparent
-                animationType="slide"
-                
-            >
-                <View style={styles.modalOverlay}>
-
-                    <View style={styles.filterModal}>
-
-                        {/* HEADER */}
-
-                        <View style={styles.filterHeader}>
-
-                            <Text style={styles.filterHeading}>
-                                Filters
-                            </Text>
-
-                            <TouchableOpacity
-                                onPress={() => setShowFilter(false)}
-                            >
-                                <MaterialIcons
-                                    name="close"
-                                    size={24}
-                                    color="#111"
-                                />
-                            </TouchableOpacity>
-
-                        </View>
-
-                        <ScrollView
+                {
+                    checkInDate &&
+                        checkOutDate &&
+                        maxGuests ? (
+                        <FlatList
+                            data={roomList}
+                            keyExtractor={(item, index) =>
+                                item.id?.toString() ||
+                                index.toString()
+                            }
+                            renderItem={renderRoomItem}
                             showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{
+                                paddingBottom: 30,
+                                flexGrow:
+                                    roomList.length === 0 ? 1 : undefined,
+                            }}
+                            ListEmptyComponent={() => (
+                                <View style={styles.noDataContainer}>
+                                    <MaterialIcons
+                                        name="hotel"
+                                        size={70}
+                                        color="#D1D5DB"
+                                    />
+
+                                    <Text style={styles.noDataTitle}>
+                                        No Rooms Found
+                                    </Text>
+
+                                    <Text style={styles.noDataSubtitle}>
+                                        Try changing filters or search
+                                        keyword
+                                    </Text>
+                                </View>
+                            )}
+                        />
+                    ) : (
+                        <View
+                            style={{
+                                alignItems: "center",
+                                marginTop: 50,
+                            }}
                         >
-
-                            {/* Beds */}
-
-                            <Text style={styles.filterTitle}>
-                                No. Of Beds
-                            </Text>
-
-                            <View style={styles.counterContainer}>
-
-                                <TouchableOpacity
-                                    style={styles.counterBtn}
-                                    onPress={() =>
-                                        beds > 1 && setBeds(beds - 1)
-                                    }
-                                >
-                                    <Text style={styles.counterText}>
-                                        -
-                                    </Text>
-                                </TouchableOpacity>
-
-                                <Text style={styles.counterValue}>
-                                    {beds}
-                                </Text>
-
-                                <TouchableOpacity
-                                    style={styles.counterBtn}
-                                    onPress={() =>
-                                        setBeds(beds + 1)
-                                    }
-                                >
-                                    <Text style={styles.counterText}>
-                                        +
-                                    </Text>
-                                </TouchableOpacity>
-
-                            </View>
-
-                            {/* Guests */}
-
-                            <Text style={styles.filterTitle}>
-                                Max Guests
-                            </Text>
-
-                            <View style={styles.counterContainer}>
-
-                                <TouchableOpacity
-                                    style={styles.counterBtn}
-                                    onPress={() =>
-                                        maxGuests > 1 &&
-                                        setMaxGuests(maxGuests - 1)
-                                    }
-                                >
-                                    <Text style={styles.counterText}>
-                                        -
-                                    </Text>
-                                </TouchableOpacity>
-
-                                <Text style={styles.counterValue}>
-                                    {maxGuests}
-                                </Text>
-
-                                <TouchableOpacity
-                                    style={styles.counterBtn}
-                                    onPress={() =>
-                                        setMaxGuests(maxGuests + 1)
-                                    }
-                                >
-                                    <Text style={styles.counterText}>
-                                        +
-                                    </Text>
-                                </TouchableOpacity>
-
-                            </View>
-
-                            {/* Room Type */}
-
-                            <Text style={styles.filterTitle}>
-                                Room Type
-                            </Text>
-
-                            <View style={styles.roomTypeContainer}>
-
-                                {roomTypes.map((item, index) => {
-
-                                    const isSelected =
-                                        selectedRoomType.includes(item);
-
-                                    return (
-                                        <TouchableOpacity
-                                            key={index}
-                                            style={[
-                                                styles.roomTypeChip,
-                                                isSelected &&
-                                                styles.selectedRoomTypeChip,
-                                            ]}
-                                            onPress={() =>
-                                                handleRoomType(item)
-                                            }
-                                        >
-                                            <Text
-                                                style={[
-                                                    styles.roomTypeText,
-                                                    isSelected &&
-                                                    styles.selectedRoomTypeText,
-                                                ]}
-                                            >
-                                                {item}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </View>
-
-                        </ScrollView>
-
-                        {/* BUTTONS */}
-
-                        <View style={styles.bottomBtnContainer}>
-
-                            <TouchableOpacity
-                                style={styles.resetBtn}
-                                onPress={() => {
-                                    setBeds(1);
-                                    setMaxGuests(2);
-                                    setSelectedRoomType([]);
-                                }}
+                            <Text
+                                style={styles.noDataSubtitle}
                             >
-                                <Text style={styles.resetBtnText}>
-                                    Reset
-                                </Text>
-                            </TouchableOpacity>
+                                Please select check-in,
+                                check-out dates and number of
+                                guests to see available rooms.
+                            </Text>
 
-                            <TouchableOpacity
-                                style={styles.applyBtn}
-                                onPress={() => setShowFilter(false)}
-                            >
-                                <Text style={styles.applyBtnText}>
-                                    Apply
-                                </Text>
-                            </TouchableOpacity>
-
+                            <MaterialIcons
+                                name="hotel"
+                                size={70}
+                                color="#D1D5DB"
+                                style={{ marginTop: 20 }}
+                            />
                         </View>
+                    )
+                };
+            </ScrollView >
 
-                    </View>
 
-                </View>
-            </Modal>
+            <CustomCalendar
+                title="---- Check In ----"
+                visible={checkInPicker}
+                minDate={new Date(new Date().setDate(new Date().getDate() + 1))}
+                selectedDate={checkInDate ? parseDDMMYYYY(checkInDate) : new Date()}
+                onDateSelect={date => {
+                    console.log("Selected Check-In Date:", date);
+                    setCheckInDate(date);
+                    setCheckInPicker(false);
+                    setCheckOutPicker(true);
+                }}
+            />
 
-        </View>
+            <CustomCalendar
+                title="---- Check Out ----"
+                visible={checkOutPicker}
+                minDate={checkInDate ? parseDDMMYYYY(checkInDate) : new Date()}
+                startDate={checkInDate ? parseDDMMYYYY(checkInDate) : new Date()}
+                rangePicker={true}
+                onRangeSelect={(startDate, endDate) => {
+                    setCheckOutDate(endDate);
+                    setCheckOutPicker(false);
+                }}
+            />
+
+            <CustomeLoading isLoading={loading} />
+        </View >
     );
 };
 
 export default RoomAvailableScreen;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) =>
+    StyleSheet.create({
 
-    container: {
-        flex: 1,
-        backgroundColor: "#F8F8F8",
-    },
+        container: {
+            flex: 1,
+            backgroundColor:colors.background,
+        },
 
-    // ================= HEADER =================
+        // ================= BODY =================
 
-    header: {
-        paddingTop: 25,
-        paddingBottom: 25,
-        paddingHorizontal: 18,
-        borderBottomLeftRadius: 28,
-        borderBottomRightRadius: 28,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        elevation: 5,
-    },
+        scrollContainer: {
+            padding: 18,
+            paddingBottom: 100,
+        },
 
-    backBtn: {
-        width: 42,
-        height: 42,
-        borderRadius: 21,
-        backgroundColor: "rgba(255,255,255,0.2)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
+        // ================= DATE =================
 
-    filterTopBtn: {
-        width: 42,
-        height: 42,
-        borderRadius: 21,
-        backgroundColor: "rgba(255,255,255,0.2)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
+        dateMainContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 18,
+        },
 
-    headerTitle: {
-        color: "#FFF",
-        fontSize: 20,
-        fontFamily: "Poppins-SemiBold",
-    },
+        dateCard: {
+            width: "31%",
+            backgroundColor: colors.card,
+            borderRadius: 10,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            elevation: 2,
+        },
 
-    // ================= BODY =================
+        dateLabel: {
+            fontSize: 14,
+            color: colors.text,
+            fontFamily: "Poppins-Regular",
+        },
 
-    scrollContainer: {
-        padding: 18,
-        paddingBottom: 100,
-    },
+        dateValue: {
+            fontSize: 11,
+            color: colors.text,
+            fontFamily: "Poppins-SemiBold",
+            textAlign: "center",
+            marginTop: 5,
+        },
 
-    // ================= DATE =================
+        filterContainer: {
+            backgroundColor: colors.card,
+            padding: 18,
+            borderRadius: 20,
+            marginBottom: 20,
+        },
 
-    dateMainContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 18,
-    },
+        filterHeading: {
+            fontSize: 22,
+            color: colors.text,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    dateCard: {
-        width: "31%",
-        backgroundColor: "#FFF",
-        borderRadius: 18,
-        paddingVertical: 15,
-        paddingHorizontal: 10,
-        alignItems: "center",
-        elevation: 2,
-    },
+        filterTitle: {
+            fontSize: 16,
+            color: colors.text,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    dateLabel: {
-        fontSize: 11,
-        color: "#777",
-        fontFamily: "Poppins-Regular",
-    },
+        counterContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+        },
 
-    dateValue: {
-        fontSize: 11,
-        color: "#222",
-        fontFamily: "Poppins-SemiBold",
-        marginTop: 2,
-    },
+        counterBtn: {
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            backgroundColor: colors.primary,
+            justifyContent: "center",
+            alignItems: "center",
+        },
 
-    filterContainer: {
-        backgroundColor: "#FFF",
-        padding: 18,
-        borderRadius: 20,
-        marginBottom: 20,
-    },
+        counterText: {
+            color: colors.text,
+            fontSize: 22,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    filterHeading: {
-        fontSize: 22,
-        color: "#111",
-        fontFamily: "Poppins-SemiBold",
-        marginBottom: 20,
-    },
+        counterValue: {
+            marginHorizontal: 20,
+            fontSize: 18,
+            color: colors.text,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    filterTitle: {
-        fontSize: 16,
-        color: "#222",
-        fontFamily: "Poppins-SemiBold",
-        marginTop: 15,
-    },
+        roomTypeContainer: {
+            flexDirection: "row",
+            flexWrap: "wrap",
+            marginTop: 15,
+        },
 
-    counterContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginTop: 14,
-    },
+        roomTypeChip: {
+            paddingHorizontal: 18,
+            paddingVertical: 10,
+            borderRadius: 30,
+            backgroundColor: colors.card,
+            marginRight: 10,
+            marginBottom: 10,
+        },
 
-    counterBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: colors.primary,
-        justifyContent: "center",
-        alignItems: "center",
-    },
+        selectedRoomTypeChip: {
+            backgroundColor: colors.primary,
+        },
 
-    counterText: {
-        color: "#FFF",
-        fontSize: 22,
-        fontFamily: "Poppins-SemiBold",
-    },
+        roomTypeText: {
+            color: colors.text,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    counterValue: {
-        marginHorizontal: 20,
-        fontSize: 18,
-        color: "#111",
-        fontFamily: "Poppins-SemiBold",
-    },
+        selectedRoomTypeText: {
+            color: colors.text,
+        },
 
-    roomTypeContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        marginTop: 15,
-    },
+        modalOverlay: {
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "flex-end",
+        },
 
-    roomTypeChip: {
-        paddingHorizontal: 18,
-        paddingVertical: 10,
-        borderRadius: 30,
-        backgroundColor: "#F3F3F3",
-        marginRight: 10,
-        marginBottom: 10,
-    },
+        filterModal: {
+            backgroundColor: "#FFF",
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            padding: 20,
+            maxHeight: "80%",
+        },
 
-    selectedRoomTypeChip: {
-        backgroundColor: colors.primary,
-    },
+        filterHeader: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+        },
 
-    roomTypeText: {
-        color: "#444",
-        fontFamily: "Poppins-SemiBold",
-    },
+        bottomBtnContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginTop: 25,
+        },
 
-    selectedRoomTypeText: {
-        color: "#FFF",
-    },
+        resetBtn: {
+            flex: 1,
+            backgroundColor: "#F1F1F1",
+            paddingVertical: 14,
+            borderRadius: 14,
+            alignItems: "center",
+            marginRight: 10,
+        },
 
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.4)",
-        justifyContent: "flex-end",
-    },
+        applyBtn: {
+            flex: 1,
+            backgroundColor: colors.primary,
+            paddingVertical: 14,
+            borderRadius: 14,
+            alignItems: "center",
+        },
 
-    filterModal: {
-        backgroundColor: "#FFF",
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        padding: 20,
-        maxHeight: "80%",
-    },
+        resetBtnText: {
+            color: "#111",
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    filterHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 20,
-    },
+        applyBtnText: {
+            color: "#FFF",
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    bottomBtnContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 25,
-    },
+        // ================= SEARCH =================
 
-    resetBtn: {
-        flex: 1,
-        backgroundColor: "#F1F1F1",
-        paddingVertical: 14,
-        borderRadius: 14,
-        alignItems: "center",
-        marginRight: 10,
-    },
+        searchContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 20,
+        },
 
-    applyBtn: {
-        flex: 1,
-        backgroundColor: colors.primary,
-        paddingVertical: 14,
-        borderRadius: 14,
-        alignItems: "center",
-    },
+        searchBox: {
+            flex: 1,
+            height: 52,
+            backgroundColor: "#FFF",
+            borderRadius: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 14,
+            elevation: 2,
+        },
 
-    resetBtnText: {
-        color: "#111",
-        fontFamily: "Poppins-SemiBold",
-    },
+        input: {
+            flex: 1,
+            marginLeft: 10,
+            color: "#111",
+            fontFamily: "Poppins-Regular",
+        },
 
-    applyBtnText: {
-        color: "#FFF",
-        fontFamily: "Poppins-SemiBold",
-    },
+        filterBtn: {
+            marginLeft: 12,
+            backgroundColor: "#FFF3E8",
+            height: 52,
+            paddingHorizontal: 18,
+            borderRadius: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+        },
 
-    // ================= SEARCH =================
+        filterText: {
+            marginLeft: 6,
+            color: colors.primary,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    searchContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 20,
-    },
+        // ================= ROOM CARD =================
 
-    searchBox: {
-        flex: 1,
-        height: 52,
-        backgroundColor: "#FFF",
-        borderRadius: 16,
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 14,
-        elevation: 2,
-    },
+        roomCard: {
+            marginBottom: 12,
+        },
 
-    input: {
-        flex: 1,
-        marginLeft: 10,
-        color: "#111",
-        fontFamily: "Poppins-Regular",
-    },
+        roomGradient: {
+            borderRadius: 16,
+            padding: 8,
+            flexDirection: "row",
+            elevation: 2,
+        },
 
-    filterBtn: {
-        marginLeft: 12,
-        backgroundColor: "#FFF3E8",
-        height: 52,
-        paddingHorizontal: 18,
-        borderRadius: 16,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-    },
+        roomImage: {
+            width: 85,
+            height: 95,
+            borderRadius: 14,
+            backgroundColor: "#EEE",
+        },
 
-    filterText: {
-        marginLeft: 6,
-        color: colors.primary,
-        fontFamily: "Poppins-SemiBold",
-    },
+        roomContent: {
+            flex: 1,
+            marginLeft: 10,
+        },
 
-    // ================= ROOM CARD =================
+        roomTitle: {
+            fontSize: 15,
+            color: colors.text,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    roomCard: {
-        marginBottom: 12,
-    },
+        facilityRow: {
+            flexDirection: "row",
+            flexWrap: "wrap",
+            marginTop: 4,
+        },
 
-    roomGradient: {
-        borderRadius: 18,
-        padding: 10,
-        flexDirection: "row",
-        elevation: 2,
-    },
+        facilityItem: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginRight: 8,
+            marginBottom: 4,
+        },
 
-    roomImage: {
-        width: 85,
-        height: 95,
-        borderRadius: 14,
-        backgroundColor: "#EEE",
-    },
+        facilityText: {
+            marginLeft: 3,
+            fontSize: 11,
+            color: colors.text,
+            fontFamily: "Poppins-Regular",
+        },
 
-    roomContent: {
-        flex: 1,
-        marginLeft: 10,
-    },
+        priceText: {
+            fontSize: 16,
+            color: colors.primary,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    roomTitle: {
-        fontSize: 15,
-        color: "#222",
-        fontFamily: "Poppins-SemiBold",
-    },
+        perNight: {
+            fontSize: 11,
+            color: "#777",
+            marginLeft: 4,
+            marginBottom: 2,
+            fontFamily: "Poppins-Regular",
+        },
 
-    facilityRow: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        marginTop: 4,
-    },
+        locationText: {
+            marginTop: 2,
+            color: "#777",
+            fontSize: 13,
+            fontFamily: "Poppins-Regular",
+        },
 
-    facilityItem: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginRight: 8,
-        marginBottom: 4,
-    },
+        buttonRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: 8,
+        },
 
-    facilityText: {
-        marginLeft: 3,
-        fontSize: 11,
-        color: "#666",
-        fontFamily: "Poppins-Regular",
-    },
+        viewDetailsBtn: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginLeft: 10,
+        },
 
-    priceText: {
-        marginTop: 4,
-        fontSize: 16,
-        color: colors.primary,
-        fontFamily: "Poppins-SemiBold",
-    },
+        viewDetailsText: {
+            color: colors.primary,
+            fontSize: 13,
+            marginRight: 4,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    locationText: {
-        marginTop: 2,
-        color: "#777",
-        fontSize: 13,
-        fontFamily: "Poppins-Regular",
-    },
+        bookNowBtn: {
+            backgroundColor: colors.primary,
+            alignSelf: "flex-start",
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            borderRadius: 10,
+        },
 
-    buttonRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginTop: 8,
-    },
+        topRow: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+        },
 
-    viewDetailsBtn: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginLeft: 10,
-    },
+        statusBadge: {
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 20,
+        },
 
-    viewDetailsText: {
-        color: colors.primary,
-        fontSize: 13,
-        marginRight: 4,
-        fontFamily: "Poppins-SemiBold",
-    },
+        statusText: {
+            fontSize: 10,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    bookNowBtn: {
-        backgroundColor: colors.primary,
-        alignSelf: "flex-start",
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 10,
-    },
+        roomNumber: {
+            fontSize: 12,
+            color: "#777",
+            marginTop: 2,
+            fontFamily: "Poppins-Regular",
+        },
 
-    bookNowText: {
-        color: "#FFF",
-        fontSize: 12,
-        fontFamily: "Poppins-SemiBold",
-    },
+        amenitiesContainer: {
+            flexDirection: "row",
+            flexWrap: "wrap",
+            marginTop: 6,
+        },
 
-});
+        amenityChip: {
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: "#FFF3E8",
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 20,
+            marginRight: 6,
+            marginBottom: 6,
+        },
+
+        amenityText: {
+            marginLeft: 4,
+            fontSize: 10,
+            color: "#444",
+            fontFamily: "Poppins-Medium",
+        },
+
+        priceContainer: {
+            flexDirection: "row",
+            alignItems: "flex-end",
+            flexWrap: "wrap",
+        },
+
+        priceRow: {
+            marginTop: 0,
+        },
+
+        oldPrice: {
+            color: "#999",
+            textDecorationLine: "line-through",
+            fontSize: 11,
+            marginRight: 6,
+            marginBottom: 1,
+            fontFamily: "Poppins-Regular",
+        },
+
+        discountBadge: {
+            backgroundColor: "#E8F8EE",
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 20,
+        },
+
+        discountText: {
+            color: "#1B9C57",
+            fontSize: 11,
+            fontFamily: "Poppins-SemiBold",
+        },
+
+        bookNowText: {
+            color: "#FFF",
+            fontSize: 12,
+            fontFamily: "Poppins-SemiBold",
+        },
+
+        noDataContainer: {
+            marginTop: 80,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 30,
+        },
+
+        noDataTitle: {
+            marginTop: 16,
+            fontSize: 20,
+            color: "#222",
+            fontFamily: "Poppins-SemiBold",
+        },
+
+        noDataSubtitle: {
+            marginTop: 6,
+            fontSize: 13,
+            color: "#777",
+            textAlign: "center",
+            fontFamily: "Poppins-Regular",
+        },
+
+        resetSearchBtn: {
+            marginTop: 20,
+            backgroundColor: colors.primary,
+            paddingHorizontal: 22,
+            paddingVertical: 12,
+            borderRadius: 12,
+        },
+
+        resetSearchText: {
+            color: "#FFF",
+            fontFamily: "Poppins-SemiBold",
+        },
+
+        roomTypeItem: {
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 18,
+            backgroundColor: colors.card,
+            marginRight: 10,
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
+        },
+
+        selectedRoomTypeItem: {
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
+        },
+
+        // roomTypeText: {
+        //     fontSize: 14,
+        //     color: '#374151',
+        //     fontFamily: 'Poppins-Medium',
+        // },
+
+        // selectedRoomTypeText: {
+        //     color: '#FFF',
+        // },
+
+    });

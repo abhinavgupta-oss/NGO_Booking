@@ -1,22 +1,26 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
     StyleSheet,
     FlatList,
     TouchableOpacity,
+    ActivityIndicator,
     Image,
     StatusBar,
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
+
+import { EventListFilter } from "../../Services/Event/EventService";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icons } from "../../utility/utility";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
 import { useEventStore } from "../../Stores/useEventStore";
 import CustomeLoading from "../../Component/Loading/CustomeLoading";
+import CommonHeader from "../../Component/Header/CommonHeader";
 
 interface EventItem {
     id: number;
@@ -32,13 +36,21 @@ interface EventItem {
 
 const EventListScreens = () => {
     const navigation = useNavigation();
+    const route = useRoute<any>();
 
     const { eventList, loading: eventLoading, fetchEventList } = useEventStore();
 
-    // 1 = Upcoming | 3 = Past
-    const [selectedType, setSelectedType] = useState<1 | 3>(3);
 
-    const EventList = useCallback(async (typeId: number) => {
+    // 1 = Upcoming | 2 = Ongoing | 3 = Past
+    const [selectedType, setSelectedType] = useState<1 | 2 | 3>(
+        route?.params?.selectedTab || 1
+    );
+
+    useEffect(() => {
+        EventList(selectedType);
+    }, [selectedType]);
+
+    const EventList = async (typeId: number) => {
         try {
 
             const eventPayload = {
@@ -53,11 +65,7 @@ const EventListScreens = () => {
         } catch (error) {
             console.log("Event List Error:", error);
         }
-    }, [fetchEventList]);
-
-    useEffect(() => {
-        EventList(selectedType);
-    }, [selectedType, EventList]);
+    };
 
     const renderItem = ({ item }: { item: EventItem }) => {
         return (
@@ -66,9 +74,9 @@ const EventListScreens = () => {
                 style={styles.cardWrapper}
                 onPress={() =>
                     navigation.navigate("EventDetails", {
-                        eventDetails: item,
-                    })
-                }
+                            eventId: item.id,
+                        })
+                    }
             >
                 <LinearGradient
                     colors={["#FFFFFF", "#FFF7ED"]}
@@ -106,7 +114,15 @@ const EventListScreens = () => {
                             />
 
                             <Text style={styles.infoText}>
-                                {item?.startDate} • {item?.startTimeHr}
+                                {item?.startDate}
+
+                                {item?.startTimeHr && (
+                                    <> {" • "}
+                                        {item?.startTimeHr}
+                                    </>
+                                )}
+
+
                             </Text>
                         </View>
 
@@ -120,7 +136,11 @@ const EventListScreens = () => {
                             />
 
                             <Text style={styles.infoText}>
-                                {item?.endDate} • {item?.endTimeHr}
+                                {item?.endDate} {item?.endTimeHr && (
+                                    <> {" • "}
+                                        {item?.endTimeHr}
+                                    </>
+                                )}
                             </Text>
                         </View>
 
@@ -155,43 +175,32 @@ const EventListScreens = () => {
 
             {/* HEADER */}
 
-            <View style={styles.headerRow}>
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    style={styles.backButton}
-                >
-                    <Image
-                        source={Icons.LeftSolid}
-                        style={styles.backIcon}
-                    />
-                </TouchableOpacity>
+             <CommonHeader title="Events" />
 
-                <Text style={styles.headerText}>
-                    Events
-                </Text>
-
-                <View style={{ width: 45 }} />
-            </View>
+            {/* TOGGLE BUTTON */}
 
             {/* TOGGLE BUTTON */}
 
             <View style={styles.toggleContainer}>
-                {/* UPCOMING */}
+
+
+
+                {/* ONGOING */}
 
                 <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={() => setSelectedType(3)}
-                    style={{ flex: 1 }}
+                    onPress={() => setSelectedType(2)}
+                    style={styles.toggleFlex}
                 >
                     <LinearGradient
                         colors={
-                            selectedType === 3
+                            selectedType === 2
                                 ? ["#ED7723", "#F59E0B"]
                                 : ["#FFFFFF", "#FFFFFF"]
                         }
                         style={[
                             styles.toggleButton,
-                            selectedType !== 3 &&
+                            selectedType !== 2 &&
                             styles.inactiveButton,
                         ]}
                     >
@@ -200,23 +209,23 @@ const EventListScreens = () => {
                                 styles.toggleText,
                                 {
                                     color:
-                                        selectedType === 3
+                                        selectedType === 2
                                             ? "#FFF"
                                             : "#666",
                                 },
                             ]}
                         >
-                            Upcoming
+                            Ongoing
                         </Text>
                     </LinearGradient>
                 </TouchableOpacity>
 
-                {/* PAST */}
+                {/* UPCOMING */}
 
                 <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => setSelectedType(1)}
-                    style={{ flex: 1 }}
+                    style={styles.toggleFlex}
                 >
                     <LinearGradient
                         colors={
@@ -241,35 +250,71 @@ const EventListScreens = () => {
                                 },
                             ]}
                         >
-                            Past Events
+                            Upcoming
                         </Text>
                     </LinearGradient>
                 </TouchableOpacity>
+
+                {/* PAST */}
+
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setSelectedType(3)}
+                    style={styles.toggleFlex}
+                >
+                    <LinearGradient
+                        colors={
+                            selectedType === 3
+                                ? ["#ED7723", "#F59E0B"]
+                                : ["#FFFFFF", "#FFFFFF"]
+                        }
+                        style={[
+                            styles.toggleButton,
+                            selectedType !== 3 &&
+                            styles.inactiveButton,
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.toggleText,
+                                {
+                                    color:
+                                        selectedType === 3
+                                            ? "#FFF"
+                                            : "#666",
+                                },
+                            ]}
+                        >
+                            Past
+                        </Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+
             </View>
 
             {/* LOADER */}
-                <FlatList
-                    data={eventList}
-                    keyExtractor={(item) =>
-                        item.id.toString()
-                    }
-                    renderItem={renderItem}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.listContainer}
-                    ListEmptyComponent={
-                        <View style={styles.emptyContainer}>
-                            <MaterialIcons
-                                name="search"
-                                size={70}
-                                color="#CCC"
-                            />
+            <FlatList
+                data={eventList}
+                keyExtractor={(item) =>
+                    item.id.toString()
+                }
+                renderItem={renderItem}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.listContainer}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <MaterialIcons
+                            name="search"
+                            size={70}
+                            color="#CCC"
+                        />
 
-                            <Text style={styles.emptyText}>
-                                No Events Found
-                            </Text>
-                        </View>
-                    }
-                />
+                        <Text style={styles.emptyText}>
+                            No Events Found
+                        </Text>
+                    </View>
+                }
+            />
 
             <CustomeLoading isLoading={eventLoading} />
         </SafeAreaView>
@@ -363,6 +408,11 @@ const styles = StyleSheet.create({
         padding: 14,
         elevation: 2,
         alignItems: "center",
+    },
+
+    toggleFlex: {
+        flex: 1,
+        marginHorizontal: 3,
     },
 
     // ================= IMAGE =================

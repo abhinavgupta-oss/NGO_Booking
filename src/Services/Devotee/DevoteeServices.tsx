@@ -1,6 +1,7 @@
 import BaseService from "../BasicServices/BassicService";
 import { API } from "../BasicServices/endpoints";
 import { saveAuthData } from "../../Stores/AuthStore/AuthStorage";
+import { useProfileStore } from "../../Stores/useProfileStore";
 
 export const DevoteeSendOTP = async (payload: any) => {
     try {
@@ -77,6 +78,22 @@ export const DevoteemyProfile = async () => {
         throw error;
     }
 };
+
+export const DevoteeUpdateProfile = async (UserId:string,payload:any) => {
+    try {
+        console.log(" deviceManagerLogin payload");
+        const response = await BaseService.put(API.AUTH_URL.UPDATE_PROFILE(UserId),payload);
+        console.log("reporst", response)
+        return response;
+    } catch (error: any) {
+        console.log(error)
+        console.log(error?.customMessage)
+        throw error;
+    }
+};
+
+
+
 
 
 export const DevoteemyDonation = async (payload:any) => {

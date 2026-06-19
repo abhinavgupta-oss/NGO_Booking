@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     View,
     Text,
@@ -7,21 +7,31 @@ import {
     ScrollView,
     StatusBar,
     Image,
+    Pressable,
     BackHandler,
     ToastAndroid,
+    Animated,
+    Dimensions,
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
-import { Icons } from "../../utility/utility";
+import { Icons, Images } from "../../utility/utility";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
 import { useProfileStore } from "../../Stores/useProfileStore";
 import CustomeLoading from "../../Component/Loading/CustomeLoading";
 import { useEventStore } from "../../Stores/useEventStore";
+import { GetOngoingEvents } from "../../Services/Event/EventService";
+import AnimatedZoomCard from "../../Component/ScreenComponent/AnimatedZoomCard";
+import { useTheme } from "../../utility/AppTheam/ThemeContext";
+
 
 const DashboardScreen = () => {
-    const navigation = useNavigation()
+    const { colors, darkMode, toggleTheme } = useTheme();
+    const styles = createStyles(colors);
+    const navigation = useNavigation();
+    const [liveEvents, setLiveEvents] = useState<any[]>([]);
     const menuList = [
         {
             id: 1,
@@ -79,26 +89,10 @@ const DashboardScreen = () => {
             title: "Dinner Prasadam",
         },
     ];
+
+    // const [EventList, setEventList] = useState<any[]>([]);
     const { myProfile, loading, fetchMyprofile } = useProfileStore();
-    const { eventList, fetchEventList } = useEventStore();
-
-    const fetchData = useCallback(async () => {
-        try {
-            const resp = await fetchMyprofile();
-            console.log("resp", resp)
-
-            const eventPayload = {
-                "eventFilterTypeId": 3,
-                "pageNumber": 1,
-                "pageSize": 3,
-            }
-
-            const respList = await fetchEventList(eventPayload);
-            console.log("respList", respList)
-        } catch (error) {
-            console.log("error", error);
-        }
-    }, [fetchMyprofile, fetchEventList]);
+    const { eventList, loading: eventLoading, fetchEventList } = useEventStore();
 
     useFocusEffect(
         useCallback(() => {
@@ -127,8 +121,32 @@ const DashboardScreen = () => {
             );
 
             return () => backHandler.remove();
-        }, [fetchData])
+        }, [])
     );
+
+    const fetchData = async () => {
+        try {
+            const resp = await fetchMyprofile();
+            console.log("resp", resp)
+
+            const eventPayload = {
+                "eventFilterTypeId": 1,
+                "pageNumber": 1,
+                "pageSize": 3,
+                "statusId": 2,
+            }
+
+            const respList = await fetchEventList(eventPayload);
+            const liveResp = await GetOngoingEvents();
+
+            if (liveResp?.status) {
+                setLiveEvents(liveResp?.result || []);
+            }
+            console.log("respList", respList)
+        } catch (error) {
+            console.log("error", error);
+        }
+    };
 
 
     const handelNavigate = async (id: any) => {
@@ -171,6 +189,11 @@ const DashboardScreen = () => {
         }
     };
 
+
+    // =================================== Animation ================
+
+    const scrollY = useRef(new Animated.Value(0)).current;
+
     return (
         <View style={styles.container}>
             <StatusBar
@@ -186,12 +209,14 @@ const DashboardScreen = () => {
             >
                 <View style={{ width: "70%" }}>
                     <Text style={styles.welcomeText}>
-                        Jay Gau Mata,
-                        Jay Gopal.! 🙏
+                        {myProfile?.dashboardTagLine} !🙏
                     </Text>
 
                     <Text style={styles.userName}>
                         Namaste, {myProfile?.fullName || "Devotee"}
+                    </Text>
+                    <Text style={styles.login}>
+                        Last Login: {myProfile?.lastLoginOn}
                     </Text>
                 </View>
 
@@ -206,14 +231,32 @@ const DashboardScreen = () => {
 
             {/* ================= BODY ================= */}
 
-            <ScrollView
+            {/* <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContainer}
+            > */}
+
+            <Animated.ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContainer}
+                scrollEventThrottle={16}
+                onScroll={Animated.event(
+                    [
+                        {
+                            nativeEvent: {
+                                contentOffset: {
+                                    y: scrollY,
+                                },
+                            },
+                        },
+                    ],
+                    { useNativeDriver: true }
+                )}
             >
                 {/* ================= QUICK CARD ================= */}
 
                 <LinearGradient
-                    colors={["#FFF7ED", "#FFE7D1"]}
+                    colors={[colors.Linearcard1, colors.Linearcard2]}
                     style={styles.quickCard}
                 >
                     <View style={{ flex: 1 }}>
@@ -225,7 +268,10 @@ const DashboardScreen = () => {
                             Book your darshan slot quickly and avoid waiting.
                         </Text>
 
-                        <TouchableOpacity style={styles.bookBtn}>
+                        <TouchableOpacity style={styles.bookBtn} activeOpacity={0.8}
+                            onPress={() =>
+                                navigation.navigate("RoomAvailableScreen")
+                            }>
                             <Text style={styles.bookBtnText}>
                                 Book Now
                             </Text>
@@ -254,7 +300,7 @@ const DashboardScreen = () => {
                             onPress={() => handelNavigate(item.id)}
                         >
                             <LinearGradient
-                                colors={["#FFFFFF", "#FFF7ED"]}
+                                colors={[colors.Linearcard1, colors.Linearcard2]}
                                 style={styles.menuGradient}
                             >
                                 <View style={styles.iconContainer}>
@@ -272,6 +318,104 @@ const DashboardScreen = () => {
                         </TouchableOpacity>
                     ))}
                 </View>
+
+                {/* ================= LIVE EVENTS ================= */}
+
+                {liveEvents?.length > 0 && (
+                    <>
+                        <View style={styles.sectionHeader}>
+
+                            <View style={styles.liveBadge}>
+
+                                <View style={styles.liveDot} />
+
+                                <Text style={styles.liveBadgeText}>
+                                    LIVE
+                                </Text>
+
+                            </View>
+
+                            {/* <TouchableOpacity onPress={() =>
+                                navigation.navigate("EventListScreens", {
+                                    selectedTab: 2,
+                                })
+                            }>
+                                <Text style={styles.viewAll}>
+                                    View All
+                                </Text>
+                            </TouchableOpacity> */}
+
+                        </View>
+
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                        >
+
+                            {liveEvents.map((item, index) => (
+
+                                <TouchableOpacity
+                                    key={index}
+                                    activeOpacity={0.85}
+                                    style={styles.liveCard}
+                                    onPress={() =>
+                                        navigation.navigate(
+                                            "EventDetails",
+                                            {
+                                                eventId: item.id,
+                                            }
+                                        )
+                                    }
+                                >
+
+                                    <Image
+                                        source={item.bannerURL ? { uri: item.bannerURL } : Images.login}
+                                        style={styles.liveImage}
+                                    />
+
+                                    <LinearGradient
+                                        colors={[
+                                            "transparent",
+                                            "rgba(0,0,0,0.85)",
+                                        ]}
+                                        style={styles.liveOverlay}
+                                    >
+
+                                        {/* EVENT TITLE */}
+
+                                        <Text style={styles.liveTitle}>
+                                            {item.title}
+                                        </Text>
+
+                                        {/* SESSION */}
+
+                                        <Text style={styles.liveSession}>
+                                            {
+                                                item?.schedules?.title
+                                            }
+                                        </Text>
+
+                                        {/* TIME */}
+
+                                        <Text style={styles.liveTime}>
+                                            {
+                                                item?.schedules
+                                                    ?.startTimeHr
+                                            }
+                                            {" - "}
+                                            {
+                                                item?.schedules
+                                                    ?.endTimeHr
+                                            }
+                                        </Text>
+
+                                    </LinearGradient>
+
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </>
+                )}
 
                 {/* ================= EVENTS ================= */}
 
@@ -301,15 +445,15 @@ const DashboardScreen = () => {
                                 navigation.navigate(
                                     "EventDetails",
                                     {
-                                        eventDetails: item,
+                                        eventId: item.id,
                                     },
                                 )
                             }
                         >
                             <LinearGradient
                                 colors={[
-                                    "#FFFFFF",
-                                    "#FFF7ED",
+                                    colors.Linearcard1,
+                                    colors.Linearcard2,
                                 ]}
                                 style={
                                     styles.eventGradient
@@ -420,11 +564,12 @@ const DashboardScreen = () => {
                 <Text style={styles.scheduleTitle}>
                     Daily Schedule
                 </Text>
-
-                <View style={styles.scheduleContainer}>
-
+                <AnimatedZoomCard
+                    scrollY={scrollY}
+                    maxScale={1.30}
+                    style={styles.scheduleContainer}
+                >
                     {/* TOGGLE */}
-
                     <View style={styles.toggleContainer}>
 
                         <TouchableOpacity
@@ -509,9 +654,12 @@ const DashboardScreen = () => {
 
                         </View>
                     ))}
-                </View>
+                </AnimatedZoomCard>
 
-            </ScrollView>
+                {/* </View> */}
+
+            </Animated.ScrollView>
+            {/* </ScrollView> */}
             <CustomeLoading isLoading={loading} />
         </View>
     );
@@ -519,331 +667,410 @@ const DashboardScreen = () => {
 
 export default DashboardScreen;
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#F8F8F8",
-    },
+const createStyles = (colors: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
 
-    // ================= HEADER =================
+        // ================= HEADER =================
 
-    header: {
-        paddingTop: 25,
-        paddingHorizontal: 20,
-        paddingBottom: 30,
-        borderBottomLeftRadius: 30,
-        borderBottomRightRadius: 30,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        elevation: 5,
-    },
+        header: {
+            paddingTop: 25,
+            paddingHorizontal: 20,
+            paddingBottom: 30,
+            borderBottomLeftRadius: 30,
+            borderBottomRightRadius: 30,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            elevation: 5,
+        },
 
-    welcomeText: {
-        // width:"0%",
-        color: "#FFF",
-        fontSize: 25,
-        opacity: 0.9,
-        fontFamily: "Poppins-SemiBold"
-    },
+        welcomeText: {
+            color: "#FFF",
+            fontSize: 23,
+            opacity: 0.9,
+            fontFamily: "Poppins-SemiBold"
+        },
 
-    userName: {
-        color: "#FFF",
-        fontSize: 17,
-        fontFamily: "Poppins-SemiBold",
-        marginTop: 4,
-    },
+        userName: {
+            color: "#FFF",
+            fontSize: 18,
+            fontFamily: "Poppins-SemiBold",
+            marginTop: 4,
+        },
+        login: {
+            color: "#FFF",
+            fontSize: 10,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    notificationBtn: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: "rgba(255,255,255,0.2)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
+        notificationBtn: {
+            width: 50,
+            height: 50,
+            borderRadius: 25,
+            backgroundColor: "rgba(255,255,255,0.2)",
+            justifyContent: "center",
+            alignItems: "center",
+        },
 
-    // ================= BODY =================
+        // ================= BODY =================
 
-    scrollContainer: {
-        padding: 18,
-        paddingBottom: 100,
-    },
+        scrollContainer: {
+            padding: 18,
+            paddingBottom: 100,
+        },
 
-    // ================= QUICK CARD =================
+        // ================= QUICK CARD =================
 
-    quickCard: {
-        borderRadius: 24,
-        padding: 20,
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 25,
-        elevation: 3,
-    },
+        quickCard: {
+            borderRadius: 24,
+            padding: 20,
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 25,
+            elevation: 3,
+        },
 
-    quickTitle: {
-        fontSize: 22,
-        fontFamily: "Poppins-SemiBold",
-        color: "#000",
-    },
+        quickTitle: {
+            fontSize: 22,
+            fontFamily: "Poppins-SemiBold",
+            color: colors.text,
+        },
 
-    quickSubTitle: {
-        fontSize: 14,
-        fontFamily: "Poppins-SemiBold",
-        color: "#555",
-        marginTop: 8,
-        lineHeight: 20,
-        width: "90%",
-    },
+        quickSubTitle: {
+            fontSize: 14,
+            fontFamily: "Poppins-SemiBold",
+            color: colors.subText,
+            marginTop: 8,
+            lineHeight: 20,
+            width: "90%",
+        },
 
-    quickImage: {
-        width: 90,
-        height: 90,
-    },
+        quickImage: {
+            width: 90,
+            height: 90,
+        },
 
-    bookBtn: {
-        marginTop: 18,
-        backgroundColor: colors.primary,
-        alignSelf: "flex-start",
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        borderRadius: 12,
-    },
+        bookBtn: {
+            marginTop: 18,
+            backgroundColor: colors.primary,
+            alignSelf: "flex-start",
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            borderRadius: 12,
+        },
 
-    bookBtnText: {
-        color: "#FFF",
-        fontFamily: "Poppins-SemiBold",
-        fontSize: 14,
-    },
+        bookBtnText: {
+            color: "#FFF",
+            fontFamily: "Poppins-SemiBold",
+            fontSize: 14,
+        },
 
-    // ================= SECTION =================
+        // ================= SECTION =================
 
-    sectionHeader: {
-        marginTop: 28,
-        marginBottom: 18,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
+        sectionHeader: {
+            marginTop: 28,
+            marginBottom: 18,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+        },
 
-    sectionTitle: {
-        fontSize: 20,
-        fontFamily: "Poppins-SemiBold",
-        color: "#111",
-        marginBottom: 18,
-    },
+        sectionTitle: {
+            fontSize: 20,
+            fontFamily: "Poppins-SemiBold",
+            color: colors.text,
+            marginBottom: 18,
+        },
 
-    viewAll: {
-        color: colors.primary,
-        fontSize: 15,
-        fontFamily: "Poppins-SemiBold",
-    },
+        viewAll: {
+            color: colors.primary,
+            fontSize: 15,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    // ================= MENU =================
+        // ================= MENU =================
 
-    gridContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-    },
+        gridContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+        },
 
-    menuCard: {
-        // height: 160,
-        width: "23%",
-        marginBottom: 15,
-    },
+        menuCard: {
+            // height: 160,
+            width: "23%",
+            marginBottom: 15,
+        },
 
-    menuGradient: {
-        borderRadius: 20,
-        paddingVertical: 18,
-        alignItems: "center",
-        justifyContent: "center",
-        elevation: 2,
-        minHeight: 140,
-    },
+        menuGradient: {
+            borderRadius: 20,
+            paddingVertical: 18,
+            alignItems: "center",
+            justifyContent: "center",
+            elevation: 2,
+            minHeight: 140,
+        },
 
-    iconContainer: {
-        width: 58,
-        height: 58,
-        borderRadius: 18,
-        backgroundColor: "#FFF3E8",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 12,
-    },
+        iconContainer: {
+            width: 58,
+            height: 58,
+            borderRadius: 18,
+            backgroundColor: colors.card,
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 12,
+        },
 
-    menuIcon: {
-        width: 34,
-        height: 34,
-    },
+        menuIcon: {
+            width: 34,
+            height: 34,
+        },
 
-    menuTitle: {
-        fontSize: 13,
-        fontFamily: "Poppins-SemiBold",
-        color: "#333",
-        textAlign: "center",
-        paddingHorizontal: 4,
-        lineHeight: 18,
-    },
+        menuTitle: {
+            fontSize: 13,
+            fontFamily: "Poppins-SemiBold",
+            color: colors.subText,
+            textAlign: "center",
+            paddingHorizontal: 4,
+            lineHeight: 18,
+        },
 
-    // ================= EVENT CARD =================
+        // ================= EVENT CARD =================
 
-    eventCard: {
-        marginBottom: 16,
-    },
+        eventCard: {
+            marginBottom: 16,
+        },
 
-    eventGradient: {
-        borderRadius: 20,
-        padding: 14,
-        flexDirection: "row",
-        alignItems: "center",
-        elevation: 2,
-    },
+        eventGradient: {
+            borderRadius: 20,
+            padding: 14,
+            flexDirection: "row",
+            alignItems: "center",
+            elevation: 2,
+        },
 
-    eventImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 16,
-        backgroundColor: "#EEE",
-    },
+        eventImage: {
+            width: 100,
+            height: 100,
+            borderRadius: 16,
+            backgroundColor: colors.card,
+        },
 
-    eventContent: {
-        flex: 1,
-        marginLeft: 14,
-    },
+        eventContent: {
+            flex: 1,
+            marginLeft: 14,
+        },
 
-    eventTitle: {
-        fontSize: 17,
-        fontFamily: "Poppins-SemiBold",
-        color: "#222",
-    },
+        eventTitle: {
+            fontSize: 17,
+            fontFamily: "Poppins-SemiBold",
+            color: colors.subText,
+        },
 
-    eventType: {
-        fontSize: 13,
-        color: colors.primary,
-        fontFamily: "Poppins-SemiBold",
-        marginTop: 4,
-        marginBottom: 10,
-    },
+        eventType: {
+            fontSize: 13,
+            color: colors.primary,
+            fontFamily: "Poppins-SemiBold",
+            marginTop: 4,
+            marginBottom: 10,
+        },
 
-    dateContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 6,
-    },
+        dateContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 6,
+        },
 
-    dateText: {
-        fontSize: 13,
-        color: "#555",
-        marginLeft: 5,
-        fontFamily: "Poppins-SemiBold",
-    },
+        dateText: {
+            fontSize: 13,
+            color: colors.subText,
+            marginLeft: 5,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    locationContainer: {
-        flexDirection: "row",
-        alignItems: "flex-start",
-    },
+        locationContainer: {
+            flexDirection: "row",
+            alignItems: "flex-start",
+        },
 
-    locationText: {
-        fontSize: 13,
-        color: "#555",
-        marginLeft: 5,
-        flex: 1,
-        fontFamily: "Poppins-SemiBold",
-    },
+        locationText: {
+            fontSize: 13,
+            color: colors.subText,
+            marginLeft: 5,
+            flex: 1,
+            fontFamily: "Poppins-SemiBold",
+        },
 
 
-    // ================= DAILY SCHEDULE =================
+        // ================= DAILY SCHEDULE =================
 
-    scheduleTitle: {
-        fontSize: 22,
-        fontFamily: "Poppins-SemiBold",
-        color: "#0B2341",
-        marginTop: 15,
-        marginBottom: 18,
-    },
+        scheduleTitle: {
+            fontSize: 22,
+            fontFamily: "Poppins-SemiBold",
+            color: colors.text,
+            marginTop: 15,
+            marginBottom: 18,
+        },
 
-    scheduleContainer: {
-        backgroundColor: "#F3F3F3",
-        borderRadius: 24,
-        padding: 18,
-        marginBottom: 25,
-        elevation: 2,
-    },
+        scheduleContainer: {
+            backgroundColor: colors.card,
+            borderRadius: 24,
+            padding: 18,
+            marginHorizontal: 25,
+            elevation: 2,
+        },
 
-    toggleContainer: {
-        flexDirection: "row",
-        backgroundColor: "#ECECEC",
-        borderRadius: 16,
-        padding: 5,
-        marginBottom: 24,
-    },
+        toggleContainer: {
+            flexDirection: "row",
+            backgroundColor: colors.card,
+            borderRadius: 16,
+            paddingVertical: 5,
+            marginBottom: 24,
+        },
 
-    toggleBtn: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 14,
-        alignItems: "center",
-    },
+        toggleBtn: {
+            flex: 1,
+            paddingVertical: 8,
+            borderRadius: 14,
+            alignItems: "center",
+        },
 
-    activeToggleBtn: {
-        backgroundColor: colors.primary,
-    },
+        activeToggleBtn: {
+            backgroundColor: colors.primary,
+        },
 
-    toggleText: {
-        fontSize: 16,
-        fontFamily: "Poppins-SemiBold",
-        color: "#666",
-    },
+        toggleText: {
+            fontSize: 12,
+            fontFamily: "Poppins-SemiBold",
+            color: colors.subText,
+        },
 
-    activeToggleText: {
-        color: "#FFF",
-    },
+        activeToggleText: {
+            color: "#FFF",
+        },
 
-    scheduleRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 16,
-    },
+        scheduleRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 16,
+        },
 
-    timeText: {
-        width: 90,
-        fontSize: 15,
-        color: "#23395B",
-        fontFamily: "Poppins-SemiBold",
-    },
+        timeText: {
+            width: 70,
+            fontSize: 12,
+            color: colors.subText,
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    scheduleCard: {
-        flex: 1,
-        backgroundColor: "#F5EDE2",
-        borderRadius: 16,
-        paddingVertical: 18,
-        paddingHorizontal: 18,
-    },
+        scheduleCard: {
+            flex: 1,
+            backgroundColor: colors.card,
+            borderRadius: 10,
+            paddingVertical: 10,
+            paddingHorizontal: 15,
+        },
 
-    scheduleCardText: {
-        fontSize: 17,
-        fontFamily: "Poppins-SemiBold",
-        color: "#0B2341",
-    },
-    emptyContainer: {
-        justifyContent: "center",
-        alignItems: "center",
-        marginTop: 20,
-    },
+        scheduleCardText: {
+            fontSize: 12,
+            fontFamily: "Poppins-SemiBold",
+            color: colors.subText,
+            textAlign: "center"
+        },
+        emptyContainer: {
+            justifyContent: "center",
+            alignItems: "center",
+            marginTop: 20,
+        },
 
-    emptyTitle: {
-        marginTop: 16,
-        fontSize: 22,
-        color: "#222",
-        fontFamily: "Poppins-SemiBold",
-    },
+        emptyTitle: {
+            marginTop: 16,
+            fontSize: 22,
+            color: "#222",
+            fontFamily: "Poppins-SemiBold",
+        },
 
-    emptySubTitle: {
-        marginTop: 6,
-        fontSize: 15,
-        color: "#777",
-        fontFamily: "Poppins-Regular",
-    },
+        emptySubTitle: {
+            marginTop: 6,
+            fontSize: 15,
+            color: "#777",
+            fontFamily: "Poppins-Regular",
+        },
+        liveCard: {
+            width: 320,
+            height: 220,
+            borderRadius: 24,
+            overflow: "hidden",
+            marginRight: 16,
+            elevation: 5,
+        },
 
-});
+        liveImage: {
+            width: "100%",
+            height: "100%",
+            backgroundColor: colors.card,
+        },
+
+        liveOverlay: {
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+
+            paddingHorizontal: 18,
+            paddingVertical: 16,
+
+            borderBottomLeftRadius: 24,
+            borderBottomRightRadius: 24,
+        },
+
+        liveBadge: {
+            flexDirection: "row",
+            alignItems: "center",
+            alignSelf: "flex-start",
+            backgroundColor: "#FF0000",
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 30,
+            marginBottom: 12,
+        },
+
+        liveDot: {
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: "#fff",
+            marginRight: 6,
+        },
+
+        liveBadgeText: {
+            color: "#FFF",
+            fontSize: 12,
+            fontFamily: "Poppins-Bold",
+        },
+
+        liveTitle: {
+            color: "#FFF",
+            fontSize: 22,
+            fontFamily: "Poppins-Bold",
+        },
+
+        liveSession: {
+            color: "#FFF",
+            fontSize: 14,
+            opacity: 0.9,
+            marginTop: 4,
+            fontFamily: "Poppins-Regular",
+        },
+
+        liveTime: {
+            color: "#FFF",
+            fontSize: 13,
+            marginTop: 8,
+            fontFamily: "Poppins-SemiBold",
+        },
+
+    });

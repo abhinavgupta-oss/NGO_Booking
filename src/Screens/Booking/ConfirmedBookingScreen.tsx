@@ -1,14 +1,23 @@
-import {StatusBar, Image, StyleSheet, Text, TouchableOpacity, View
+import {
+    ScrollView, StatusBar, TextInput,
+    Image, StyleSheet, Text, TouchableOpacity, View
 } from "react-native";
 import { colors } from "../../utility/AppTheam";
 import {
+    useRoute,
     useNavigation
 } from "@react-navigation/native";
 import { Images } from "../../utility/utility";
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons/static";
+import CommonHeader from "../../Component/Header/CommonHeader";
 
-const ConfirmedBookingScreen = () => {
+const ConfirmedBookingScreen = ({route}) => {
+
+    
+     const { billData } = route.params || {};
+
+     console.log("ConfirmedBookingScreen",billData)
 
     const navigation = useNavigation();
     return (
@@ -21,31 +30,8 @@ const ConfirmedBookingScreen = () => {
 
             {/* ================= HEADER ================= */}
 
-            <LinearGradient
-                colors={[colors.primary, "#F59E0B"]}
-                style={styles.header}
-            >
-
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => navigation.goBack()}
-                    style={styles.backBtn}
-                >
-                    <MaterialIcons
-                        name="arrow-back"
-                        size={24}
-                        color="#FFF"
-                    />
-                </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>
-                    Payment
-                </Text>
-
-                {/* Empty view for perfect center alignment */}
-                <View style={{ width: 42 }} />
-
-            </LinearGradient>
+            <CommonHeader title="Payment Successful" />
+            
 
             <View style={styles.card}>
 
@@ -86,28 +72,33 @@ const ConfirmedBookingScreen = () => {
                 <View style={styles.infoContainer}>
 
                     <View style={styles.infoBlock}>
-
                         <Text style={styles.infoLabel}>
                             Booking ID
                         </Text>
-
                         <Text style={styles.infoValue}>
-                            #BK124578
+                            {billData?.bookingId}
                         </Text>
-
                     </View>
 
                     <View style={styles.infoBlock}>
+                        <Text style={styles.infoLabel}>
+                            Payment Id
+                        </Text>
+                        <Text style={styles.infoValue}>
+                            {billData?.paymentId}
+                        </Text>
+                    </View>
 
+                    <View style={styles.infoBlock}>
                         <Text style={styles.infoLabel}>
                             Total Amount
                         </Text>
-
                         <Text style={styles.infoValue}>
-                            ₹2650
+                            {billData?.tokenAmount}
                         </Text>
-
                     </View>
+
+                    
 
                 </View>
 
@@ -116,9 +107,7 @@ const ConfirmedBookingScreen = () => {
                 <TouchableOpacity
                     activeOpacity={0.8}
                     style={styles.bookNowBtn} onPress={() =>
-                        navigation.navigate("Dashboard", {
-                            screen: "Booking",
-                        })
+                        navigation.replace("MyBookingScreen")
                     }
                 >
 
@@ -128,7 +117,10 @@ const ConfirmedBookingScreen = () => {
 
                 </TouchableOpacity>
 
-                <TouchableOpacity>
+                <TouchableOpacity activeOpacity={0.8}
+                    onPress={() =>
+                        navigation.replace("Dashboard")
+                    }>
                     <Text style={styles.backToHome}>
                         Back to Home
                     </Text>
@@ -204,7 +196,9 @@ const styles = StyleSheet.create({
         width: "100%",
         backgroundColor: "#FFF8F2",
         borderRadius: 18,
-        padding: 18,
+        // padding: 18,
+        paddingTop:18,
+        paddingHorizontal:30,
         marginTop: 24,
     },
 
@@ -219,10 +213,10 @@ const styles = StyleSheet.create({
     },
 
     infoValue: {
-        fontSize: 20,
+        fontSize: 13,
         color: "#111",
         marginTop: 4,
-        fontFamily: "Poppins-Bold",
+        fontFamily: "Poppins-Regular",
     },
 
     bookNowBtn: {

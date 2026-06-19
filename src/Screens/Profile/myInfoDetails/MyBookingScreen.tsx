@@ -1,15 +1,195 @@
-import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, Pressable, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors } from "../../../utility/AppTheam";
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import {
+    useRoute,
     useNavigation
 } from "@react-navigation/native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useBookingStore } from "../../../Stores/useBookingStore";
+import CommonHeader from "../../../Component/Header/CommonHeader";
+import CustomeLoading from "../../../Component/Loading/CustomeLoading";
 
 const MyBookingScreen = () => {
     const navigation = useNavigation();
     const [activeTab, setActiveTab] = useState("upcoming");
+    const [pageNumber, setPageNumber] = useState(1);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMoreData, setHasMoreData] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const { myBookingList, loading, fetchMyBookingList } = useBookingStore();
+
+    useEffect(() => {
+        setPageNumber(1);
+        setHasMoreData(true);
+
+        fetchMyRoomData(1, false);
+    }, [activeTab]);
+
+    const getStatusId = () => {
+        return activeTab === "upcoming" ? 2 : 4;
+    };
+
+    const fetchMyRoomData = async (
+        page = 1,
+        isLoadMore = false,
+    ) => {
+        try {
+            if (isLoadMore) {
+                setIsLoadingMore(true);
+            }
+
+            const payload = {
+                pageNumber: page,
+                pageSize: 10,
+                statusId: getStatusId(),
+            };
+
+            const response = await fetchMyBookingList(
+                payload,
+                isLoadMore,
+            );
+
+            const newData = response?.result || [];
+
+            setHasMoreData(newData.length === 10);
+
+        } catch (error) {
+            console.log(
+                "Donation Error =>",
+                error,
+            );
+        } finally {
+            setIsLoadingMore(false);
+            setRefreshing(false);
+        }
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        setPageNumber(1);
+        setHasMoreData(true);
+        await fetchMyRoomData(
+            1,
+            false,
+        );
+    };
+
+    const loadMore = () => {
+        if (
+            loading ||
+            isLoadingMore ||
+            !hasMoreData
+        ) {
+            return;
+        }
+
+        const nextPage =
+            pageNumber + 1;
+
+        setPageNumber(nextPage);
+
+        fetchMyRoomData(
+            nextPage,
+            true,
+        );
+    };
+
+
+    const renderDonationItem = ({ item }: any) => {
+        const isBooked = item?.statusName === "Booked";
+
+        return (
+            <Pressable style={styles.card} onPress={() => navigation.navigate("BookingDetails", { bookingId: item?.bookingId })}>
+                <View style={styles.content}>
+                    {/* Room Type */}
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                        <View>
+                            <Text style={styles.roomTitle}>
+                                {item?.devoteeName} - {item?.mobileNumber}
+                            </Text>
+                            <Text>{item?.bookingNumber}</Text>
+                        </View>
+
+                        <View
+                            style={[
+                                styles.statusBadge,
+                                {
+                                    backgroundColor: isBooked
+                                        ? "#E8F5E9"
+                                        : "#FFF3E0",
+                                },
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.statusText,
+                                    {
+                                        color: isBooked
+                                            ? "#2E7D32"
+                                            : "#F57C00",
+                                    },
+                                ]}
+                            >
+                                {item?.statusName}
+                            </Text>
+                        </View>
+                    </View>
+                    {/* Check In / Check Out */}
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 20 }}>
+
+                        <View>
+                            <Text style={styles.dateText}>
+                                Booking
+                            </Text>
+                            <Text style={styles.dateText}>
+                                {item?.bookingDate}
+                            </Text>
+                        </View>
+                        <View>
+                            <Text style={styles.dateText}>
+                                checkIn
+                            </Text>
+                            <Text style={styles.dateText}>
+                                {item?.checkInDate}
+                            </Text>
+                        </View>
+                        <View>
+                            <Text style={styles.dateText}>
+                                check Out
+                            </Text>
+                            <Text style={styles.dateText}>
+                                {item?.checkOutDate}
+                            </Text>
+
+                        </View>
+                    </View>
+                    {/* Devotee Name */}
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "40%", marginTop: 20 }}>
+                        <View style={{ flexDirection: "row" }}>
+                            <MaterialIcons name="room-preferences" size={20} />
+
+                            <Text style={styles.infoText}>
+                                {item?.roomNumber} {item?.roomTypeName}
+                            </Text>
+                        </View>
+                        <View style={{ flexDirection: "row" }}>
+                            <MaterialIcons name="people" size={20} />
+                            <Text style={styles.infoText}>
+                                {item?.totalGuests}
+                            </Text>
+                            <View>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            </Pressable>
+
+        );
+    };
+
     return (
         <View style={styles.container}>
 
@@ -18,90 +198,111 @@ const MyBookingScreen = () => {
                 barStyle="light-content"
             />
 
+            {/* HEADER */}
+            <CommonHeader title="My Bookings" />
+
             {/* ================= HEADER ================= */}
 
-            <LinearGradient
-                colors={[colors.primary, "#F59E0B"]}
-                style={styles.header}
-            >
-
+            <View style={styles.tabsContainer}>
                 <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={() => navigation.goBack()}
-                    style={styles.backBtn}
+                    style={[
+                        styles.tabBtn,
+                        activeTab === "upcoming" && styles.activeTab,
+                    ]}
+                    onPress={() => setActiveTab("upcoming")}
                 >
-                    <MaterialIcons
-                        name="arrow-back"
-                        size={24}
-                        color="#FFF"
-                    />
-                </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>
-                    My Bookings
-                </Text>
-
-                {/* Empty view for perfect center alignment */}
-                <View style={{ width: 42 }} />
-
-            </LinearGradient>
-
-
-            <View style={styles.tabsContainer}>
-                <TouchableOpacity activeOpacity={0.8} style={[styles.tabBtn, activeTab === "upcoming" && styles.activeTab]} onPress={() => setActiveTab("upcoming")}>
                     <Text
                         style={[
                             styles.tabText,
-                            activeTab === "upcoming" && styles.activeTabText
+                            activeTab === "upcoming" &&
+                            styles.activeTabText,
                         ]}
                     >
                         Upcoming
                     </Text>
                 </TouchableOpacity>
-                <TouchableOpacity activeOpacity={0.8} style={[styles.tabBtn, activeTab === "completed" && styles.activeTab]} onPress={() => setActiveTab("completed")}>
+
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[
+                        styles.tabBtn,
+                        activeTab === "completed" && styles.activeTab,
+                    ]}
+                    onPress={() => setActiveTab("completed")}
+                >
                     <Text
                         style={[
                             styles.tabText,
-                            activeTab === "completed" && styles.activeTabText
+                            activeTab === "completed" &&
+                            styles.activeTabText,
                         ]}
                     >
                         Completed
                     </Text>
                 </TouchableOpacity>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false}
+
+
+
+            {/* LIST */}
+
+            <FlatList
+                data={myBookingList}
+                renderItem={renderDonationItem}
+                keyExtractor={(item, index) =>
+                    `${item?.id || index}`
+                }
+                showsVerticalScrollIndicator={false}
                 contentContainerStyle={{
-                    paddingBottom: 140
-                }}>
-                <View style={styles.card}>
-                    <Image
-                        source={require("../../../assets/images/login.png")}
-                        style={styles.image}
-                    />
-
-
-                    <View style={styles.content}>
-                        <Text style={styles.roomTitle}>Deluxe Room</Text>
-                        <Text style={styles.dateText}>20 May - 22 May 2024</Text>
-                        <Text style={styles.bookingLabel}>
-                            Booking ID
-                        </Text>
-
-                        <Text style={styles.bookingId}>
-                            #BK124578
-                        </Text>
-                        <View style={styles.bottomRow}>
-
-                            <Text style={styles.price}>₹2400</Text>
-
-                            <View style={styles.statusBadge}>
-                                <Text style={styles.statusText}>Confirmed</Text>
-                            </View>
-
+                    padding: 16,
+                    paddingBottom: 40,
+                    flexGrow: 1,
+                }}
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                onEndReached={loadMore}
+                onEndReachedThreshold={0.3}
+                removeClippedSubviews
+                initialNumToRender={10}
+                maxToRenderPerBatch={10}
+                windowSize={10}
+                ListFooterComponent={
+                    isLoadingMore ? (
+                        <View
+                            style={{
+                                paddingVertical: 20,
+                                alignItems: "center",
+                            }}
+                        >
+                            <Text>
+                                Loading More...
+                            </Text>
                         </View>
-                    </View>
-                </View>
-            </ScrollView>
+                    ) : null
+                }
+                ListEmptyComponent={
+                    !loading ? (
+                        <View
+                            style={styles.emptyContainer}
+                        >
+                            <MaterialIcons
+                                name="hotel"
+                                size={90}
+                                color="#D0D5DD"
+                            />
+
+                            <Text
+                                style={styles.emptyTitle}
+                            >
+                                No Booking Yet
+                            </Text>
+                        </View>
+                    ) : null
+                }
+            />
+
+            <CustomeLoading isLoading={loading} />
 
         </View>
     )
@@ -177,9 +378,7 @@ const styles = StyleSheet.create({
 
     card: {
         backgroundColor: "#FFF",
-        marginHorizontal: 16,
         marginBottom: 16,
-        marginTop: 18,
         borderRadius: 18,
         padding: 18,
         flexDirection: "row",
@@ -202,36 +401,8 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        marginLeft: 14,
+        marginLeft: 4,
         justifyContent: "space-between"
-    },
-    bottomRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginTop: 12
-    },
-    statusBadge: {
-        backgroundColor: "#E7F8EC",
-        paddingHorizontal: 12,
-        borderRadius: 20,
-        paddingVertical: 6
-    },
-    statusText: {
-        color: "#16A34A",
-        fontSize: 12,
-        fontFamily: "Poppins-SemiBold",
-    },
-    roomTitle: {
-        fontSize: 18,
-        color: "#111",
-        fontFamily: "Poppins-Bold"
-    },
-    dateText: {
-        marginTop: 6,
-        color: "#666",
-        fontSize: 13,
-        fontFamily: "Poppins-Regular",
     },
     bookingId: {
         marginTop: 3,
@@ -239,16 +410,67 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontFamily: "Poppins-Regular",
     },
-    bookingLabel: {
-        marginTop: 15,
-        color: "#999",
-        fontSize: 12,
-        fontFamily: "Poppins-Regular",
+    customerName: {
+        fontSize: 15,
+        fontWeight: "600",
+        color: "#333",
+        marginTop: 4,
     },
+
+    infoText: {
+        fontSize: 14,
+        color: "#666",
+        marginTop: 3,
+    },
+
+    bottomRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: 12,
+    },
+
+    statusBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 20,
+    },
+
+    statusText: {
+        fontSize: 12,
+        fontWeight: "700",
+    },
+
     price: {
         fontSize: 20,
-        color: "#111",
-        fontFamily: "Poppins-Bold",
+        fontWeight: "700",
+        color: colors.primary,
     },
+
+    roomTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#222",
+    },
+
+    dateText: {
+        fontFamily: "Poppins-SemiBold",
+        color: "#666",
+
+    },
+
+    bookingLabel: {
+        fontSize: 13,
+        color: "#888",
+        marginTop: 4,
+    },
+
+    emptyContainer: {
+        marginTop: 80,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 30,
+    },
+
 
 })

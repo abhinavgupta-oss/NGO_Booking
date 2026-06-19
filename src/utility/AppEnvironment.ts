@@ -1,5 +1,5 @@
 const AppEnvironment = {
-    BRANCH_CODE: "TSAVR2026",
+    BRANCH_CODE: "TTGHR03", //TTGHR03
 };
 
 export default AppEnvironment;

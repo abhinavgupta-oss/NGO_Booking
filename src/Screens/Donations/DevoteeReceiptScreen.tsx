@@ -1,4 +1,7 @@
+// src/screens/DevoteeReceiptScreen.tsx
+
 import React from "react";
+
 import {
     View,
     Text,

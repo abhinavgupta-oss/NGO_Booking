@@ -1,11 +1,18 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     View,
+    Text,
     StyleSheet,
+    TouchableOpacity,
     Modal,
+    TextInput,
+    ScrollView,
+    ActivityIndicator,
 } from "react-native";
 
-import {DonationPaymentVerify } from "../../Services/Donation/DonationService";
+import MaterialIcons from "@react-native-vector-icons/material-icons";
+import CustomInput from "../../Component/formComponent/CustomInput";
+import { DonationPayment, DonationPaymentVerify } from "../../Services/Donation/DonationService";
 import { useNavigation } from "@react-navigation/native";
 import WebView from "react-native-webview";
 import { useToast } from "../../Component/Toast/ToastContext";
@@ -14,18 +21,16 @@ interface Props {
     visible: boolean;
     onClose: () => void;
     Details: any;
-    onSubmit: (data: any) => void;
 }
 
 const DonationPaymentModel = ({
     visible,
     onClose,
     Details,
-    onSubmit,
 }: Props) => {
     const { showToast } = useToast();
     const navigation = useNavigation();
-    const [, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const paymentHandled = useRef(false);
 
     const PayUrl = Details?.paymentUrl
@@ -73,8 +78,7 @@ const DonationPaymentModel = ({
                 if (updateDetails?.status) {
                     showToast(updateDetails?.message, "success")
                     const Resp = updateDetails?.result
-                    onSubmit(updateDetails?.result);
-                    navigation.replace("DonationPenDetails", { paymentId: Resp?.paymentId, token: Details?.token })
+                    navigation.replace("DonationPenDetails",{paymentId:Resp?.paymentId,token:Details?.token})
                     onClose()
                 }
                 console.log("updateDetails", updateDetails)

@@ -16,6 +16,7 @@ import { DonationPayment } from "../../Services/Donation/DonationService";
 import DonationPaymentModel from "./DonationPaymentModel";
 import { colors } from "../../utility/AppTheam";
 import CustomeLoading from "../../Component/Loading/CustomeLoading";
+import CustomButton from "../../Component/formComponent/CustomButton";
 
 const DonationDetails = ({ route, navigation }) => {
     const { Details } = route.params;
@@ -39,18 +40,11 @@ const DonationDetails = ({ route, navigation }) => {
                 setShowPaymentModal(true)
             }
         } catch (error: any) {
-            console.log("Donation submit error", error);
+
         } finally {
             setLoading(false);
         }
-    };
 
-    const handelDonationUpdate = async () => {
-        try {
-            console.log("Donation update called");
-        } catch (error: any) {
-            console.log("Donation update error", error);
-        }
     };
 
     return (
@@ -243,16 +237,13 @@ const DonationDetails = ({ route, navigation }) => {
 
             {/* ================= FIXED BUTTON ================= */}
 
-            <View style={styles.bottomContainer}>
-                <TouchableOpacity
-                    onPress={() => {
-                        setShowDonationModal(true);
-                    }}
-                    style={styles.donateButton}
-                >
-                    <Text style={{color:"#fff",fontSize:19,fontWeight:800}}>Donate Now</Text>
-                </TouchableOpacity>
-            </View>
+            <CustomButton
+                title="Donate Now"
+                onPress={() => {
+                    setShowDonationModal(true);
+                }}
+                buttonStyle={styles.bottomContainer}
+            />
 
             <DonationModal
                 visible={showDonationModal}
@@ -269,12 +260,11 @@ const DonationDetails = ({ route, navigation }) => {
                     setShowPaymentModal(false)
                 }
                 Details={paymentDetails}
-                onSubmit={handelDonationUpdate}
             />
 
-            <CustomeLoading isLoading={loading} />  
+            <CustomeLoading isLoading={loading} />
         </View>
-        
+
     );
 };
 
@@ -488,17 +478,4 @@ const styles = StyleSheet.create({
         elevation: 20,
     },
 
-    donateButton: {
-        backgroundColor: colors.primary,
-        paddingVertical: 16,
-        borderRadius: 18,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    donateButtonText: {
-        color: "#FFF",
-        fontSize: 18,
-        fontWeight: "700",
-    },
 });

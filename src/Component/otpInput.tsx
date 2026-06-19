@@ -61,6 +61,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     borderColor: "#9BA1A6",
     color: "#000",
-    marginHorizontal: 5,
+    marginHorizontal: 3,
   },
 });

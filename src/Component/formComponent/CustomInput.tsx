@@ -11,7 +11,7 @@ import {
 interface CustomInputProps extends TextInputProps {
   label?: string;
   value: string;
-  icon: string;
+  icon?: string;
   onChangeText: (text: string) => void;
   onBlur?: () => void;
   error?: string;
@@ -52,7 +52,8 @@ const CustomInput: React.FC<CustomInputProps> = ({
         />
 
         {/* Input */}
-        <TextInput
+        <TextInput numberOfLines={1}
+          ellipsizeMode="tail"
           value={value}
           onChangeText={onChangeText}
           onBlur={onBlur}
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "#FFF",
     paddingHorizontal: 15,
-    minHeight: 60,
+    minHeight: 50,
   },
 
   multilineWrapper: {
@@ -117,6 +118,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#111",
     paddingVertical: 0,
+    paddingRight: 35,
   },
 
   multilineInput: {

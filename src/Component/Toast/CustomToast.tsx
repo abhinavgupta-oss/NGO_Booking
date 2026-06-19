@@ -7,8 +7,7 @@ import {
     Dimensions,
     Image,
 } from 'react-native';
-
-import { Icons } from '../../utility/utility';
+import { Icons, icons } from '../../utility/utility';
 
 const { width } = Dimensions.get('window');
 
@@ -21,47 +20,28 @@ type Props = {
     onHide: () => void;
 };
 
-const CustomToast: React.FC<Props> = ({
-    visible,
-    type,
-    message,
-    onHide,
-}) => {
-    const fadeAnim = useRef(
-        new Animated.Value(0),
-    ).current;
+const CustomToast: React.FC<Props> = ({ visible, type, message, onHide }) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        let timeout: NodeJS.Timeout;
-
         if (visible) {
             Animated.timing(fadeAnim, {
                 toValue: 1,
                 duration: 300,
                 useNativeDriver: true,
             }).start(() => {
-                timeout = setTimeout(() => {
+                setTimeout(() => {
                     Animated.timing(fadeAnim, {
                         toValue: 0,
                         duration: 300,
                         useNativeDriver: true,
-                    }).start(() => {
-                        onHide();
-                    });
+                    }).start(onHide);
                 }, 2000);
             });
         }
+    }, [visible]);
 
-        return () => {
-            if (timeout) {
-                clearTimeout(timeout);
-            }
-        };
-    }, [visible, fadeAnim, onHide]);
-
-    if (!visible) {
-        return null;
-    }
+    if (!visible) return null;
 
     const backgroundColor = {
         success: 'rgba(230, 244, 234, 0.95)',
@@ -92,10 +72,8 @@ const CustomToast: React.FC<Props> = ({
             style={[
                 styles.toast,
                 {
-                    backgroundColor:
-                        backgroundColor[type],
-                    borderColor:
-                        borderColor[type],
+                    backgroundColor: backgroundColor[type],
+                    borderColor: borderColor[type],
                     opacity: fadeAnim,
                 },
             ]}
@@ -105,19 +83,10 @@ const CustomToast: React.FC<Props> = ({
                     source={iconMap[type]}
                     style={styles.icon}
                 />
-
                 <View style={styles.tostTest}>
-                    <Text
-                        style={[
-                            styles.text,
-                            {
-                                color:
-                                    textColor[type],
-                            },
-                        ]}
-                    >
-                        {message}
-                    </Text>
+                <Text style={[styles.text, { color: textColor[type] }]}>
+                    {message}
+                </Text>
                 </View>
             </View>
         </Animated.View>
@@ -143,29 +112,25 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 6,
         elevation: 5,
-        marginTop: 50,
+        marginTop:50
     },
-
     innerContent: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-
     icon: {
         width: 20,
         height: 20,
         marginRight: 10,
     },
-
     text: {
         fontSize: 14,
         fontWeight: '500',
     },
-
-    tostTest: {
-        width: '80%',
-        marginRight: 20,
-    },
+    tostTest:{
+        width:"80%",
+        marginRight:20
+    }
 });
 
 export default CustomToast;

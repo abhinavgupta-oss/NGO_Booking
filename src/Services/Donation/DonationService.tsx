@@ -13,6 +13,7 @@ export const DonationListFilter = async (payload: any) => {
     }
 };
 
+
 export const DonationPayment = async (payload: any) => {
     try {
         console.log(" EventListFilter payload", payload);
@@ -63,6 +64,5 @@ export const DevoteeInVoiceDetails = async (payload: any) => {
         throw error;
     }
 };
-
 
 

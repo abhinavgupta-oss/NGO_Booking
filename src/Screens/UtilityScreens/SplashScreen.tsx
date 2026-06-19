@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
     StyleSheet,
@@ -6,32 +6,59 @@ import {
     ImageBackground,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useToast } from '../../Component/Toast/ToastContext';
+import LinearGradient from 'react-native-linear-gradient';
 import { getAccessToken, isUserLoggedIn } from '../../Stores/AuthStore/AuthStorage';
+import { DevoteemyProfile } from '../../Services/Devotee/DevoteeServices';
 import { Images } from '../../utility/utility';
 import { colors } from '../../utility/AppTheam';
+import { getAppdetails } from '../../Services/Utils/UtilsService';
+import DeviceInfo from 'react-native-device-info';
+
+interface BuildType {
+    VersionCode?: string;
+}
 
 const SplashScreen = () => {
     const navigation = useNavigation<any>();
+    const { showToast } = useToast();
+
+    const [build, setBuild] = useState<BuildType | null>(null);
+    const [deviceBuild, setDeviceBuild] = useState('');
 
     useEffect(() => {
-        const timer = setTimeout(async () => {
+        const checkLogin = async () => {
             try {
-                const isLoggedIn = await isUserLoggedIn();
-                console.log("isLoggedIn", isLoggedIn)
-                const getTokenresp = await getAccessToken()
-                console.log("getTokenresp", getTokenresp)
-                if (isLoggedIn) {
-                    navigation.replace("Dashboard");
-                } else {
-                    navigation.replace("Login");
-                }
+                const timer = setTimeout(async () => {
+                    const isLoggedIn = await isUserLoggedIn();
+                    console.log("isLoggedIn", isLoggedIn)
+                    const getTokenresp = await getAccessToken()
+                    console.log("getTokenresp", getTokenresp)
+                    const appDetails = await getAppdetails()
+                    console.log("appDetails", appDetails)
+                    const currentApp = DeviceInfo.getVersion();
+                    console.log("currentApp", currentApp)
+                    if (appDetails?.versionName > currentApp) {
+                        navigation.replace("Update",{latest:appDetails})
+                    }
+                    else {
+                        if (isLoggedIn) {
+                            navigation.replace("Dashboard");
+                        } else {
+                            navigation.replace("Login");
+                        }
+                    }
+
+                }, 3000);
+
+                return () => clearTimeout(timer);
             } catch (error) {
                 console.log("Login Check Error:", error);
             }
-        }, 3000);
+        };
 
-        return () => clearTimeout(timer);
-    }, [navigation]);
+        checkLogin();
+    }, []);
 
 
     return (
@@ -43,7 +70,7 @@ const SplashScreen = () => {
             <View style={{ width: "100%", height: "100%", justifyContent: "flex-end" }}>
                 <View style={{ width: "100%", height: "50%" }}>
                     <View style={{ justifyContent: "center", alignItems: "center", marginTop: 50 }}>
-                        <Text style={{ fontSize: 20, fontFamily: "Poppins-SemiBold", color: colors.primary }}>Seva . Shraddha . Samarpan </Text>
+                        <Text style={{ fontSize: 20, fontFamily: "Poppins-SemiBold", color: colors.primary }}>Seva • Shraddha • Samarpan</Text>
                         <Text style={{ fontSize: 70, fontFamily: "Poppins-SemiBold", color: colors.primary }}>TTG NGO</Text>
                         <Text style={{ fontSize: 15, fontFamily: "Poppins-SemiBold", color: colors.primary }}>गौतीर्थ तुलसी तपोवन गौशाला</Text>
                         <Text style={{ fontSize: 10, fontFamily: "Poppins-SemiBold", color: colors.primary }}>Jay Gau Mata, Jay Gopal.!</Text>

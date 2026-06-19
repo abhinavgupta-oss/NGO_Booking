@@ -1,17 +1,18 @@
-import React, {
-    useEffect,
-    useCallback,
-} from "react";
+// src/screens/MyProfileScreen.tsx
 
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
+    Switch,
     StyleSheet,
     TouchableOpacity,
     Image,
     ScrollView,
     StatusBar,
 } from "react-native";
+
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -20,10 +21,14 @@ import { logout } from "../../Services/Utils/UtilsService";
 import { removeAuthData } from "../../Stores/AuthStore/AuthStorage";
 
 import { colors } from "../../utility/AppTheam";
-
 import { useProfileStore } from "../../Stores/useProfileStore";
 
 import CustomeLoading from "../../Component/Loading/CustomeLoading";
+import CommonHeader from "../../Component/Header/CommonHeader";
+import { useTheme } from "../../utility/AppTheam/ThemeContext";
+import ProfileUpdateModal from "./ProfileUpdateModal";
+import { DevoteeUpdateProfile } from "../../Services/Devotee/DevoteeServices";
+import { useToast } from "../../Component/Toast/ToastContext";
 
 const profileMenu = [
     {
@@ -38,128 +43,135 @@ const profileMenu = [
         icon: "volunteer-activism",
         screen: "MyDonation",
     },
-    {
-        id: 3,
-        title: "Address",
-        icon: "location-on",
-        screen: "Address",
-    },
+    // {
+    //     id: 3,
+    //     title: "Address",
+    //     icon: "location-on",
+    //     screen: "Address",
+    // },
     {
         id: 4,
-        title: "Notification Settings",
-        icon: "notifications-none",
-        screen: "NotificationSettings",
-    },
-    {
-        id: 5,
-        title: "Help & Support",
-        icon: "help-outline",
-        screen: "HelpSupport",
-    },
-    {
-        id: 6,
-        title: "About Us",
-        icon: "info-outline",
-        screen: "AboutUs",
+        title: "General Settings",
+        icon: "settings",
+        screen: "SettingsScreen",
     },
 ];
 
 const MyProfileScreen = () => {
-    const navigation: any =
-        useNavigation();
+    const navigation: any = useNavigation();
+    const { showToast } = useToast();
+    // const { colors } = useTheme();
+    const { myProfile, loading, fetchMyprofile } = useProfileStore();
+    const { colors, darkMode, toggleTheme } = useTheme();
+    const styles = createStyles(colors);
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [UserData, setUserData] = useState({
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        dob: "",
+        mobile: "",
+        email: "",
+        panNumber: "",
+    });
 
-    const {
-        myProfile,
-        loading,
-        fetchMyprofile,
-    } = useProfileStore();
 
-    const fetchProfileData = useCallback(
-        async () => {
-            try {
-                const resp =
-                    await fetchMyprofile();
 
-                console.log("resp", resp);
-            } catch (error: any) {
-                console.log(
-                    "Profile Error",
-                    error,
-                );
-            }
-        },
-        [fetchMyprofile],
+    const InfoRow = ({
+        label,
+        value,
+    }: {
+        label: string;
+        value: any;
+    }) => (
+        <View style={styles.row}>
+            <Text style={styles.label}>
+                {label}
+            </Text>
+
+            <Text style={styles.rowValue}>
+                {value}
+            </Text>
+        </View>
     );
 
     useEffect(() => {
         fetchProfileData();
-    }, [fetchProfileData]);
+    }, []);
 
-    console.log("myProfile", myProfile);
+    const fetchProfileData = async () => {
+        try {
+            await fetchMyprofile();
+            setUserData({
+                firstName: myProfile?.firstName || "",
+                middleName: myProfile?.middleName || "",
+                lastName: myProfile?.lastName || "",
+                dob: myProfile?.dob || "",
+                mobile: myProfile?.mobile || "",
+                email: myProfile?.email || "",
+                panNumber: myProfile?.panNumber || "",
+            })
+        } catch (error: any) { }
+    };
 
     const handelLogOut = async () => {
         try {
             const resp = await logout();
-
-            console.log("resp", resp);
 
             if (resp?.status) {
                 await removeAuthData();
 
                 navigation.reset({
                     index: 0,
-                    routes: [
-                        {
-                            name: "Login",
-                        },
-                    ],
+                    routes: [{ name: "Login" }],
                 });
             }
-        } catch {
-
-        }
+        } catch (error: any) { }
     };
 
-    const renderMenuItem = (
-        item: any,
-    ) => {
+    const handelProfileUpdate = async (data: any) => {
+        try {
+            const resp = await DevoteeUpdateProfile(myProfile?.id, data)
+            if (resp?.status) {
+                showToast(resp?.message, "success");
+                fetchProfileData()
+            }
+            return resp?.status
+        } catch (error: any) {
+
+        } finally {
+
+        }
+        console.log("handelProfileUpdate", data)
+    }
+
+    const renderMenuItem = (item: any, index: number) => {
         return (
             <TouchableOpacity
                 key={item.id}
-                style={styles.menuItem}
                 activeOpacity={0.8}
+                style={[
+                    styles.menuItem,
+                    index === profileMenu.length - 1 && {
+                        borderBottomWidth: 0,
+                    },
+                ]}
                 onPress={() =>
-                    navigation.navigate(
-                        item.screen,
-                        {
-                            userId:
-                                myProfile?.id,
-                        },
-                    )
+                    navigation.navigate(item.screen, {
+                        userId: myProfile?.id,
+                    })
                 }
             >
-                <View
-                    style={
-                        styles.leftContainer
-                    }
-                >
-                    <View
-                        style={
-                            styles.iconContainer
-                        }
-                    >
+                <View style={styles.leftContainer}>
+                    <View style={styles.iconContainer}>
                         <MaterialIcons
                             name={item.icon}
                             size={22}
-                            color="#555"
+                            color={colors.primary}
                         />
                     </View>
 
-                    <Text
-                        style={
-                            styles.menuTitle
-                        }
-                    >
+                    <Text style={styles.menuTitle}>
                         {item.title}
                     </Text>
                 </View>
@@ -174,234 +186,326 @@ const MyProfileScreen = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <StatusBar
-                backgroundColor="#F8F8F8"
-                barStyle="dark-content"
+                backgroundColor={colors.primary}
+                barStyle="light-content"
             />
 
+            <CommonHeader title="My Profile" />
+
             <ScrollView
-                contentContainerStyle={
-                    styles.scrollContainer
-                }
-                showsVerticalScrollIndicator={
-                    false
-                }
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContainer}
             >
                 {/* PROFILE CARD */}
 
-                <View
-                    style={styles.profileCard}
-                >
-                    {/* TOP PROFILE */}
-
-                    <View
-                        style={
-                            styles.profileHeader
-                        }
-                    >
+                <View style={styles.profileCard}>
+                    <View style={styles.profileImageWrapper}>
                         <Image
-                            source={
-                                myProfile?.profilePicUrl
-                                    ? {
-                                          uri: myProfile?.profilePicUrl,
-                                      }
-                                    : {
-                                          uri: myProfile?.branchLogo,
-                                      }
-                            }
-                            style={
-                                styles.profileImage
-                            }
+                            source={{
+                                uri:
+                                    myProfile?.profilePicUrl ||
+                                    myProfile?.branchLogo,
+                            }}
+                            style={styles.profileImage}
                         />
 
-                        <View
-                            style={
-                                styles.profileInfo
-                            }
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            style={styles.cameraButton}
+
                         >
-                            <Text
-                                style={
-                                    styles.userName
-                                }
-                            >
-                                {
-                                    myProfile?.fullName
-                                }
-                            </Text>
-
-                            <Text
-                                style={
-                                    styles.mobile
-                                }
-                            >
-                                +91 -{" "}
-                                {
-                                    myProfile?.mobile
-                                }
-                            </Text>
-
-                            <TouchableOpacity>
-                                <Text
-                                    style={
-                                        styles.editText
-                                    }
-                                >
-                                    Edit Profile
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+                            <MaterialIcons
+                                name="photo-camera"
+                                size={18}
+                                color="#FFF"
+                            />
+                        </TouchableOpacity>
                     </View>
 
-                    {/* MENU LIST */}
+                    <Text style={styles.userName}>
+                        {myProfile?.fullName || "Devotee Name"}
+                    </Text>
 
-                    <View
-                        style={
-                            styles.menuContainer
-                        }
-                    >
-                        {profileMenu.map(
-                            renderMenuItem,
-                        )}
-                    </View>
-
-                    {/* LOGOUT */}
+                    <Text style={styles.mobile}>
+                        +91 {myProfile?.mobile}
+                    </Text>
+                    {myProfile?.email && (
+                        <Text style={styles.mobile}>
+                            {myProfile?.email}
+                        </Text>
+                    )}
 
                     <TouchableOpacity
-                        style={
-                            styles.logoutButton
-                        }
-                        onPress={
-                            handelLogOut
-                        }
+                        activeOpacity={0.8}
+                        style={styles.editButton}
+                        onPress={() => setShowProfileModal(true)}
                     >
-                        <Text
-                            style={
-                                styles.logoutText
-                            }
-                        >
-                            Logout
+                        <MaterialIcons
+                            name="edit"
+                            size={18}
+                            color="#FFF"
+                        />
+
+                        <Text style={styles.editButtonText}>
+                            Edit Profile
                         </Text>
                     </TouchableOpacity>
                 </View>
+
+                {/* STATS CARD */}
+                <View style={styles.sections}>
+
+                    <InfoRow
+                        label="Payment Type"
+                        value={myProfile?.lastLoginOn}
+                    />
+
+                    <InfoRow
+                        label="Registration Date"
+                        value={myProfile?.registrationDate}
+                    />
+
+                    <InfoRow
+                        label="DOB"
+                        value={myProfile?.dob}
+                    />
+
+                </View>
+
+
+                {/* MENU */}
+
+                <View style={styles.menuContainer}>
+                    {profileMenu.map((item, index) =>
+                        renderMenuItem(item, index),
+                    )}
+                </View>
+
+                {/* LOGOUT */}
+
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.logoutButton}
+                    onPress={handelLogOut}
+                >
+                    <MaterialIcons
+                        name="logout"
+                        size={22}
+                        color="#FF4D4F"
+                    />
+
+                    <Text style={styles.logoutText}>
+                        Logout
+                    </Text>
+                </TouchableOpacity>
             </ScrollView>
 
-            <CustomeLoading
-                isLoading={loading}
+
+
+            <ProfileUpdateModal
+                visible={showProfileModal}
+                onClose={() =>
+                    setShowProfileModal(false)
+                }
+                profileData={UserData}
+                onSave={(data) => {
+                    console.log("Updated Data", data);
+                    const response = handelProfileUpdate(data)
+                    if (response) {
+                        setShowProfileModal(false);
+                    }
+                }}
             />
-        </View>
+
+            <CustomeLoading isLoading={loading} />
+        </SafeAreaView>
     );
 };
 
+
 export default MyProfileScreen;
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#F8F8F8",
-    },
 
-    scrollContainer: {
-        paddingBottom: 30,
-    },
 
-    profileCard: {
-        backgroundColor: "#FFF",
-        padding: 18,
-        elevation: 3,
-        shadowColor: "#000",
-        shadowOpacity: 0.08,
-        shadowOffset: {
-            width: 0,
-            height: 2,
+const createStyles = (colors: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
         },
-        shadowRadius: 5,
-    },
 
-    profileHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 22,
-    },
+        scrollContainer: {
+            paddingHorizontal: 18,
+            paddingTop: 80,
+            paddingBottom: 90,
+        },
 
-    profileImage: {
-        width: 78,
-        height: 78,
-        borderRadius: 40,
-        backgroundColor: "#EEE",
-    },
+        profileCard: {
+            backgroundColor: colors.card,
+            marginTop: -60,
+            borderRadius: 28,
+            paddingVertical: 28,
+            paddingHorizontal: 20,
+            alignItems: "center",
 
-    profileInfo: {
-        marginLeft: 16,
-        flex: 1,
-    },
+            elevation: 6,
+            shadowColor: "#000",
+            shadowOpacity: 0.08,
+            shadowOffset: {
+                width: 0,
+                height: 3,
+            },
+            shadowRadius: 6,
+        },
 
-    userName: {
-        fontSize: 24,
-        fontWeight: "700",
-        color: "#222",
-    },
+        profileImageWrapper: {
+            position: "relative",
+        },
 
-    mobile: {
-        marginTop: 4,
-        fontSize: 15,
-        color: "#666",
-    },
+        profileImage: {
+            width: 110,
+            height: 110,
+            borderRadius: 60,
+            borderWidth: 4,
+            borderColor: colors.card,
+            backgroundColor: "#EEE",
+        },
 
-    editText: {
-        marginTop: 8,
-        fontSize: 15,
-        fontWeight: "700",
-        color: colors.primary,
-    },
+        cameraButton: {
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: 34,
+            height: 34,
+            borderRadius: 20,
+            backgroundColor: colors.primary,
+            justifyContent: "center",
+            alignItems: "center",
+        },
 
-    menuContainer: {
-        borderWidth: 1,
-        borderColor: "#EFEFEF",
-        borderRadius: 18,
-        overflow: "hidden",
-    },
+        userName: {
+            marginTop: 18,
+            fontSize: 24,
+            fontWeight: "700",
+            color: colors.text,
+        },
 
-    menuItem: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent:
-            "space-between",
-        paddingVertical: 18,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor:
-            "#F1F1F1",
-    },
+        mobile: {
+            marginTop: 6,
+            fontSize: 15,
+            color: colors.subText,
+        },
 
-    leftContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-    },
+        editButton: {
+            marginTop: 18,
+            backgroundColor: colors.primary,
+            paddingHorizontal: 22,
+            paddingVertical: 12,
+            borderRadius: 30,
+            flexDirection: "row",
+            alignItems: "center",
+        },
 
-    iconContainer: {
-        width: 34,
-        alignItems: "center",
-    },
+        editButtonText: {
+            marginLeft: 8,
+            color: "#FFF",
+            fontSize: 15,
+            fontWeight: "700",
+        },
 
-    menuTitle: {
-        marginLeft: 10,
-        fontSize: 16,
-        fontWeight: "500",
-        color: "#333",
-    },
+        sections: {
+            padding: 15,
+            marginTop: 24,
+            backgroundColor: colors.card,
+            borderRadius: 20,
+        },
 
-    logoutButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginTop: 24,
-        paddingHorizontal: 8,
-    },
+        menuContainer: {
+            marginTop: 24,
+            backgroundColor: colors.card,
+            borderRadius: 24,
+            overflow: "hidden",
+            elevation: 3,
+            shadowColor: "#000",
+            shadowOpacity: 0.05,
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowRadius: 5,
+        },
 
-    logoutText: {
-        marginLeft: 10,
-        fontSize: 17,
-        fontWeight: "700",
-        color: "#FF5B5B",
-    },
-});
+        menuItem: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingVertical: 18,
+            paddingHorizontal: 18,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+        },
+
+        leftContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+        },
+
+        iconContainer: {
+            width: 42,
+            height: 42,
+            borderRadius: 14,
+            backgroundColor:
+                colors.background === "#121212"
+                    ? "#2A2A2A"
+                    : "#F4F6FA",
+            justifyContent: "center",
+            alignItems: "center",
+        },
+
+        menuTitle: {
+            marginLeft: 14,
+            fontSize: 16,
+            fontWeight: "600",
+            color: colors.text,
+        },
+
+        logoutButton: {
+            marginTop: 26,
+            backgroundColor:
+                colors.background === "#121212"
+                    ? "#2A1C1C"
+                    : "#FFF1F0",
+            borderRadius: 20,
+            paddingVertical: 16,
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+        },
+
+        logoutText: {
+            marginLeft: 10,
+            fontSize: 17,
+            fontWeight: "700",
+            color: "#FF4D4F",
+        },
+
+        row: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 10,
+        },
+
+        label: {
+            color: "#777",
+            flex: 1,
+        },
+
+        rowValue: {
+            flex: 1,
+            textAlign: "right",
+            color: "#111",
+            fontFamily: "Poppins-Medium",
+        },
+    });

@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  ScrollView,
+  FlatList,
 } from 'react-native';
 
 import MaterialIcons from '@react-native-vector-icons/material-icons';
@@ -28,31 +28,74 @@ const monthNames = [
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+const years = Array.from(
+  { length: new Date().getFullYear() - 1940 + 1 },
+  (_, index) => 1940 + index,
+).reverse();
+
 interface CustomCalendarProps {
+  title?: string;
   visible?: boolean;
   minDate?: Date;
   maxDate?: Date;
+  selectedDate?: Date;
+
   onDateSelect?: (date: string) => void;
+
+  rangePicker?: boolean;
+  startDate?: Date;
+  endDate?: Date;
+  onRangeSelect?: (
+    startDate: string,
+    endDate: string,
+  ) => void;
 }
 
 const CustomCalendar = ({
+  title,
   visible = true,
   minDate,
   maxDate,
+  selectedDate,
   onDateSelect,
+  rangePicker = false,
+  startDate,
+  endDate,
+  onRangeSelect,
 }: CustomCalendarProps) => {
-  const today = new Date();
+  if (!visible) {
+    return null;
+  }
 
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [selectedDate, setSelectedDate] = useState(today.getDate());
+  const today = new Date();
+  const initialDate = startDate || selectedDate || today;
+
+  const [currentMonth, setCurrentMonth] = useState(
+    initialDate.getMonth(),
+  );
+
+  const [currentYear, setCurrentYear] = useState(
+    initialDate.getFullYear(),
+  );
+
+  const [selectedFullDate, setSelectedFullDate] = useState(
+    initialDate,
+  );
+
+  const [rangeStartDate, setRangeStartDate] =
+    useState<Date | null>(startDate || null);
+
+  const [rangeEndDate, setRangeEndDate] =
+    useState<Date | null>(endDate || null);
+
   const [showPicker, setShowPicker] = useState(false);
 
-  const formattedDate = `${selectedDate
+  const formattedDate = `${selectedFullDate
+    .getDate()
     .toString()
-    .padStart(2, '0')}/${(currentMonth + 1)
-    .toString()
-    .padStart(2, '0')}/${currentYear}`;
+    .padStart(2, '0')}/${(selectedFullDate.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}/${selectedFullDate.getFullYear()}`;
 
   const daysInMonth = useMemo(() => {
     return new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -63,7 +106,7 @@ const CustomCalendar = ({
   }, [currentMonth, currentYear]);
 
   const calendarDays = useMemo(() => {
-    const days: (number | null)[] = [];
+    const days = [];
 
     for (let i = 0; i < firstDay; i++) {
       days.push(null);
@@ -75,6 +118,9 @@ const CustomCalendar = ({
 
     return days;
   }, [firstDay, daysInMonth]);
+
+  const normalizeDate = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
   const goToPreviousMonth = () => {
     if (currentMonth === 0) {
@@ -94,24 +140,40 @@ const CustomCalendar = ({
     }
   };
 
-  if (!visible) {
-    return null;
-  }
+
+  const formatDate = (date: Date) =>
+    `${date
+      .getDate()
+      .toString()
+      .padStart(2, '0')}/${(date.getMonth() + 1)
+        .toString()
+        .padStart(2, '0')}/${date.getFullYear()}`;
+
+  const isDateInRange = (
+    date: Date,
+    start: Date | null,
+    end: Date | null,
+  ) => {
+    if (!start || !end) return false;
+
+    return (
+      date.getTime() > start.getTime() &&
+      date.getTime() < end.getTime()
+    );
+  };
 
   return (
     <View style={styles.container}>
       {/* HEADER */}
-
+      {title && (
+        <Text style={{textAlign:"center",fontSize:20,fontFamily:"Poppins-Bold"}}>{title}</Text>
+      )}
       <View style={styles.headerRow}>
         <TouchableOpacity
           onPress={goToPreviousMonth}
           style={styles.iconButton}
         >
-          <MaterialIcons
-            name="chevron-left"
-            size={28}
-            color={colors.primary}
-          />
+          <MaterialIcons name="arrow-back" size={20} color="#FFF" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -127,11 +189,7 @@ const CustomCalendar = ({
           onPress={goToNextMonth}
           style={styles.iconButton}
         >
-          <MaterialIcons
-            name="chevron-right"
-            size={28}
-            color={colors.primary}
-          />
+          <MaterialIcons name="arrow-forward" size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
 
@@ -148,51 +206,41 @@ const CustomCalendar = ({
               Select Month & Year
             </Text>
 
-            <ScrollView
+            <FlatList
+              data={years}
+              keyExtractor={item => item.toString()}
               style={{ maxHeight: 350 }}
               showsVerticalScrollIndicator={false}
-            >
-              {Array.from(
-                {
-                  length: new Date().getFullYear() - 1940 + 1,
-                },
-                (_, index) => 1940 + index,
-              )
-                .reverse()
-                .map(year => (
-                  <View
-                    key={year}
-                    style={{ marginBottom: 14 }}
-                  >
-                    <Text style={styles.yearHeading}>
-                      {year}
-                    </Text>
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={5}
+              renderItem={({ item: year }) => (
+                <View style={{ marginBottom: 14 }}>
+                  <Text style={styles.yearHeading}>
+                    {year}
+                  </Text>
 
-                    <View style={styles.monthGrid}>
-                      {monthNames.map(
-                        (month, monthIndex) => (
-                          <TouchableOpacity
-                            key={month}
-                            activeOpacity={0.8}
-                            style={styles.monthItem}
-                            onPress={() => {
-                              setCurrentMonth(monthIndex);
-                              setCurrentYear(year);
-                              setShowPicker(false);
-                            }}
-                          >
-                            <Text
-                              style={styles.monthItemText}
-                            >
-                              {month.slice(0, 3)}
-                            </Text>
-                          </TouchableOpacity>
-                        ),
-                      )}
-                    </View>
+                  <View style={styles.monthGrid}>
+                    {monthNames.map((month, monthIndex) => (
+                      <TouchableOpacity
+                        key={month}
+                        activeOpacity={0.8}
+                        style={styles.monthItem}
+                        onPress={() => {
+                          setCurrentMonth(monthIndex);
+                          setCurrentYear(year);
+                          setShowPicker(false);
+                        }}
+                      >
+                        <Text style={styles.monthItemText}>
+                          {month.slice(0, 3)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                ))}
-            </ScrollView>
+                </View>
+              )}
+            />
 
             <TouchableOpacity
               activeOpacity={0.8}
@@ -227,11 +275,44 @@ const CustomCalendar = ({
 
           const isDisabled =
             !!currentDateObj &&
-            ((minDate && currentDateObj < minDate) ||
+            ((minDate &&
+              normalizeDate(currentDateObj) <
+              normalizeDate(minDate)) ||
               (maxDate &&
-                currentDateObj > maxDate));
+                normalizeDate(currentDateObj) >
+                normalizeDate(maxDate)));
 
-          const isSelected = selectedDate === day;
+          const isSelected =
+            !!day &&
+            selectedFullDate.getDate() === day &&
+            selectedFullDate.getMonth() === currentMonth &&
+            selectedFullDate.getFullYear() === currentYear;
+
+          const isToday =
+            !!day &&
+            today.getDate() === day &&
+            today.getMonth() === currentMonth &&
+            today.getFullYear() === currentYear;
+
+          const isRangeStart =
+            !!day &&
+            rangeStartDate?.getDate() === day &&
+            rangeStartDate?.getMonth() === currentMonth &&
+            rangeStartDate?.getFullYear() === currentYear;
+
+          const isRangeEnd =
+            !!day &&
+            rangeEndDate?.getDate() === day &&
+            rangeEndDate?.getMonth() === currentMonth &&
+            rangeEndDate?.getFullYear() === currentYear;
+
+          const isInRange =
+            !!day &&
+            isDateInRange(
+              currentDateObj!,
+              rangeStartDate,
+              rangeEndDate,
+            );
 
           return (
             <TouchableOpacity
@@ -245,50 +326,53 @@ const CustomCalendar = ({
                   day as number,
                 );
 
-                if (
-                  minDate &&
-                  pressedDate < minDate
-                ) {
-                  return;
+                if (rangePicker) {
+                  if (
+                    !rangeStartDate ||
+                    (rangeStartDate && rangeEndDate)
+                  ) {
+                    // First selection or reset range
+                    setRangeStartDate(pressedDate);
+                    setRangeEndDate(null);
+                  } else {
+                    // Second selection
+                    if (
+                      pressedDate.getTime() <
+                      rangeStartDate.getTime()
+                    ) {
+                      setRangeStartDate(pressedDate);
+                      setRangeEndDate(rangeStartDate);
+                    } else {
+                      setRangeEndDate(pressedDate);
+                    }
+                  }
+                } else {
+                  setSelectedFullDate(pressedDate);
+
+                  onDateSelect?.(
+                    formatDate(pressedDate),
+                  );
                 }
-
-                if (
-                  maxDate &&
-                  pressedDate > maxDate
-                ) {
-                  return;
-                }
-
-                setSelectedDate(day as number);
-
-                onDateSelect?.(
-                  `${(day as number)
-                    .toString()
-                    .padStart(2, '0')}/${(
-                    currentMonth + 1
-                  )
-                    .toString()
-                    .padStart(
-                      2,
-                      '0',
-                    )}/${currentYear}`,
-                );
               }}
               style={[
                 styles.dayButton,
-                isSelected &&
-                  styles.selectedDay,
-                isDisabled &&
-                  styles.disabledDay,
+                isToday && styles.todayDay,
+                isSelected && styles.selectedDay,
+                isRangeStart && styles.selectedDay,
+                isRangeEnd && styles.selectedDay,
+                isInRange && styles.rangeDay,
+                isDisabled && styles.disabledDay,
               ]}
             >
               <Text
                 style={[
                   styles.dayText,
-                  isSelected &&
-                    styles.selectedDayText,
+                  (isSelected ||
+                    isRangeStart ||
+                    isRangeEnd) &&
+                  styles.selectedDayText,
                   isDisabled &&
-                    styles.disabledDayText,
+                  styles.disabledDayText,
                 ]}
               >
                 {day || ''}
@@ -298,13 +382,24 @@ const CustomCalendar = ({
         })}
       </View>
 
-      {/* SELECTED DATE */}
-
-      <View style={styles.footerBox}>
-        <Text style={styles.footerText}>
-          Selected Date: {formattedDate}
-        </Text>
-      </View>
+      {rangePicker &&
+        rangeStartDate &&
+        rangeEndDate && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.confirmButton}
+            onPress={() => {
+              onRangeSelect?.(
+                formatDate(rangeStartDate),
+                formatDate(rangeEndDate),
+              );
+            }}
+          >
+            <Text style={styles.confirmButtonText}>
+              Confirm
+            </Text>
+          </TouchableOpacity>
+        )}
     </View>
   );
 };
@@ -313,6 +408,7 @@ export default CustomCalendar;
 
 const styles = StyleSheet.create({
   container: {
+    top: -100,
     margin: 20,
     padding: 18,
     borderRadius: 24,
@@ -328,10 +424,10 @@ const styles = StyleSheet.create({
   },
 
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#FFF3E8',
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -366,16 +462,21 @@ const styles = StyleSheet.create({
     height: 52,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
   },
 
   selectedDay: {
-    backgroundColor: '#ED7723',
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+  },
+
+  todayDay: {
+    borderWidth: 1,
+    borderColor: colors.primary,
     borderRadius: 16,
   },
 
   dayText: {
-    fontSize: 15,
+    fontSize: 12,
     color: '#222',
     fontFamily: 'Poppins-Medium',
   },
@@ -416,7 +517,7 @@ const styles = StyleSheet.create({
 
   yearHeading: {
     fontSize: 16,
-    color: '#ED7723',
+    color: colors.primary,
     marginBottom: 10,
     fontFamily: 'Poppins-SemiBold',
   },
@@ -431,20 +532,20 @@ const styles = StyleSheet.create({
     width: '30%',
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#FFF3E8',
+    backgroundColor: colors.primary,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
 
   monthItemText: {
-    color: '#ED7723',
-    fontSize: 14,
+    color: '#fff',
+    fontSize: 10,
     fontFamily: 'Poppins-Medium',
   },
 
   closeButton: {
     marginTop: 10,
-    backgroundColor: '#ED7723',
+    backgroundColor: colors.primary,
     borderRadius: 16,
     paddingVertical: 14,
     alignItems: 'center',
@@ -458,15 +559,39 @@ const styles = StyleSheet.create({
 
   footerBox: {
     marginTop: 15,
-    backgroundColor: '#FFF3E8',
+    backgroundColor: colors.primary,
     borderRadius: 14,
     padding: 14,
   },
 
   footerText: {
     fontSize: 14,
-    color: '#ED7723',
+    color: '#FFF',
     textAlign: 'center',
     fontFamily: 'Poppins-Medium',
+  },
+
+  arrowIcon: {
+    tintColor: '#000',
+    width: 25,
+    height: 25,
+  },
+  rangeDay: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: 10,
+  },
+  confirmButton: {
+    marginTop: 15,
+    backgroundColor: colors.primary,
+    height: 50,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  confirmButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
   },
 });
