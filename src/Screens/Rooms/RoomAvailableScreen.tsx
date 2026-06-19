@@ -31,7 +31,6 @@ const RoomAvailableScreen = () => {
     const { roomList, loading, fetchRoomList, } = useBookingStore();
 
     const [roomTypes, setRoomTypes] = useState<any[]>([]);
-    const [searchText, setSearchText] = useState("");
     const [checkInDate, setCheckInDate] = useState<Date | null>(null);
     const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
     const [maxGuests, setMaxGuests] = useState(0);
@@ -60,7 +59,6 @@ const RoomAvailableScreen = () => {
 
                 ...(maxGuests > 0 && { maxGuests }),
                 ...(selectedRoomType && { roomTypeId: selectedRoomType }),
-                ...(searchText?.trim() && { search: searchText.trim() }),
                 branchCode: AppEnvironment.BRANCH_CODE,
                 statusId: 1,
             };
