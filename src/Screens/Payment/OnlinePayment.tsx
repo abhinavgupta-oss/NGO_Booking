@@ -1,16 +1,13 @@
 import React, { useState, useRef } from 'react';
 import {
     View,
-    Text,
-    TouchableOpacity,
     StyleSheet,
-    ActivityIndicator,
-    Alert,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useToast } from '../../Component/Toast/ToastContext';
 import { BookingPaymentUpdate } from '../../Services/Booking/BookingService';
+import CustomeLoading from '../../Component/Loading/CustomeLoading';
 
 
 const OnlinePayment = () => {
@@ -107,6 +104,8 @@ const OnlinePayment = () => {
                     onNavigationStateChange={handleNavigationChange}
                 />
             </View>
+
+            <CustomeLoading isLoading={loading}/>
         </View>
     );
 };

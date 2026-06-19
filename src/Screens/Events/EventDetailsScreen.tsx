@@ -30,7 +30,7 @@ const EventDetailsScreen = ({ route, navigation }: any) => {
         try {
             const resp = await fetchEventDetails({ eventId: eventId });
             console.log("Event Details:", resp);
-        } catch (error) {
+        } catch (error:any) {
             console.log("Event Details Error:", error);
         }
     }

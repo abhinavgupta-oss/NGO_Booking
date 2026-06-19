@@ -5,7 +5,6 @@ import {
     StyleSheet,
     FlatList,
     TouchableOpacity,
-    ActivityIndicator,
     Image,
     StatusBar,
 } from "react-native";
@@ -13,9 +12,8 @@ import {
 import LinearGradient from "react-native-linear-gradient";
 import MaterialIcons from "@react-native-vector-icons/material-icons";
 
-import { EventListFilter } from "../../Services/Event/EventService";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Icons } from "../../utility/utility";
+
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { colors } from "../../utility/AppTheam";
 import { useEventStore } from "../../Stores/useEventStore";
@@ -62,7 +60,7 @@ const EventListScreens = () => {
             const respList = await fetchEventList(eventPayload);
             console.log("respList", respList);
 
-        } catch (error) {
+        } catch (error:any) {
             console.log("Event List Error:", error);
         }
     };
