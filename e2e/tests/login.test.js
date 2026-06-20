@@ -1,9 +1,56 @@
+const APP_PACKAGE = 'com.ngo_booking';
+
+async function switchToOtpMode(driver, helpers) {
+  const {waitForDisplayed, byAccessibilityId} = helpers;
+  const otpMode = await waitForDisplayed(
+    driver,
+    byAccessibilityId('login-mode-otp'),
+  );
+
+  await otpMode.click();
+}
+
+async function switchToPasswordMode(driver, helpers) {
+  const {waitForDisplayed, byAccessibilityId} = helpers;
+  const passwordMode = await waitForDisplayed(
+    driver,
+    byAccessibilityId('login-mode-password'),
+  );
+
+  await passwordMode.click();
+}
+
+async function fillOtp(driver, otp) {
+  await driver.waitUntil(
+    async () => {
+      const inputs = await driver.$$(
+        'android=new UiSelector().className("android.widget.EditText")',
+      );
+
+      return inputs.length >= otp.length + 1;
+    },
+    {
+      timeout: Number(process.env.E2E_WAIT_TIMEOUT || 5000),
+      timeoutMsg: 'Expected phone input plus OTP inputs to be displayed',
+    },
+  );
+
+  const inputs = await driver.$$(
+    'android=new UiSelector().className("android.widget.EditText")',
+  );
+  const otpInputs = inputs.slice(-otp.length);
+
+  for (let index = 0; index < otp.length; index += 1) {
+    await otpInputs[index].click();
+    await otpInputs[index].setValue(otp[index]);
+  }
+}
+
 const loginTests = [
   {
     name: 'launches the NGO Booking package',
     fn: async (driver) => {
       const packageName = await driver.getCurrentPackage();
-      const APP_PACKAGE = 'com.ngo_booking';
 
       if (packageName !== APP_PACKAGE) {
         throw new Error(`Expected ${APP_PACKAGE}, received ${packageName}`);
@@ -15,6 +62,8 @@ const loginTests = [
     name: 'shows the login screen after splash',
     fn: async (driver, helpers) => {
       const { waitForDisplayed, byAccessibilityId } = helpers;
+
+      await switchToOtpMode(driver, helpers);
 
       await waitForDisplayed(
         driver,
@@ -38,6 +87,8 @@ const loginTests = [
     fn: async (driver, helpers) => {
       const { waitForDisplayed, byAccessibilityId, byText } = helpers;
 
+      await switchToOtpMode(driver, helpers);
+
       const sendOtpButton = await waitForDisplayed(
         driver,
         byAccessibilityId('login-Send-OTP'),
@@ -57,12 +108,7 @@ const loginTests = [
     fn: async (driver, helpers) => {
       const { waitForDisplayed, byAccessibilityId, byText } = helpers;
 
-      const passwordMode = await waitForDisplayed(
-        driver,
-        byAccessibilityId('login-mode-password'),
-      );
-
-      await passwordMode.click();
+      await switchToPasswordMode(driver, helpers);
 
       await waitForDisplayed(
         driver,
@@ -93,6 +139,8 @@ const loginTests = [
     fn: async (driver, helpers) => {
       const { waitForDisplayed, byAccessibilityId } = helpers;
 
+      await switchToOtpMode(driver, helpers);
+
       const phoneInput = await waitForDisplayed(
         driver,
         byAccessibilityId('login-Phone-input'),
@@ -108,46 +156,16 @@ const loginTests = [
 
       await sendOtpButton.click();
 
-      // Wait for OTP Login button to appear
       const loginOtpButton = await waitForDisplayed(
         driver,
         byAccessibilityId('user-loginOtp-action'),
       );
 
-      // Fill OTP
-      const otp1 = await waitForDisplayed(
-        driver,
-        byAccessibilityId('otp-input-0'),
-      );
-      await otp1.setValue('1');
-
-      const otp2 = await waitForDisplayed(
-        driver,
-        byAccessibilityId('otp-input-1'),
-      );
-      await otp2.setValue('1');
-
-      const otp3 = await waitForDisplayed(
-        driver,
-        byAccessibilityId('otp-input-2'),
-      );
-      await otp3.setValue('1');
-
-      const otp4 = await waitForDisplayed(
-        driver,
-        byAccessibilityId('otp-input-3'),
-      );
-      await otp4.setValue('1');
-
-      const otp5 = await waitForDisplayed(
-        driver,
-        byAccessibilityId('otp-input-4'),
-      );
-      await otp5.setValue('1');
+      await fillOtp(driver, '11111');
 
       await loginOtpButton.click();
     },
-  }
+  },
 ];
 
 module.exports = loginTests;
