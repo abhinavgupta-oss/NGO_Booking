@@ -1,4 +1,55 @@
 const APP_PACKAGE = 'com.ngo_booking';
+const APP_START_TIMEOUT = 20000;
+const LOGIN_TIMEOUT = 30000;
+
+function androidByText(text) {
+  return `android=new UiSelector().text("${text}")`;
+}
+
+async function isDisplayed(driver, selector) {
+  try {
+    return await driver.$(selector).isDisplayed();
+  } catch (_error) {
+    return false;
+  }
+}
+
+async function clearAppData(driver) {
+  await driver.execute('mobile: clearApp', {appId: APP_PACKAGE});
+  await driver.activateApp(APP_PACKAGE);
+}
+
+async function continueFromUpdateIfNeeded(driver) {
+  if (await isDisplayed(driver, androidByText('Update Later'))) {
+    const updateLater = await driver.$(androidByText('Update Later'));
+    await updateLater.click();
+  }
+}
+
+async function waitForUnauthenticatedLogin(driver, helpers) {
+  const {waitForDisplayed, byAccessibilityId} = helpers;
+
+  await driver.waitUntil(
+    async () => {
+      await continueFromUpdateIfNeeded(driver);
+
+      return isDisplayed(driver, byAccessibilityId('login-Phone-input'));
+    },
+    {
+      timeout: LOGIN_TIMEOUT,
+      timeoutMsg: 'Expected unauthenticated app flow to land on Login screen',
+    },
+  );
+
+  await waitForDisplayed(
+    driver,
+    byAccessibilityId('login-Phone-input'),
+  );
+  await waitForDisplayed(
+    driver,
+    byAccessibilityId('login-mode-password'),
+  );
+}
 
 async function switchToOtpMode(driver, helpers) {
   const {waitForDisplayed, byAccessibilityId} = helpers;
@@ -50,8 +101,15 @@ const loginTests = [
   {
     name: 'launches the NGO Booking package',
     fn: async (driver) => {
-      const packageName = await driver.getCurrentPackage();
+      await driver.waitUntil(
+        async () => (await driver.getCurrentPackage()) === APP_PACKAGE,
+        {
+          timeout: APP_START_TIMEOUT,
+          timeoutMsg: `Expected ${APP_PACKAGE} to be the current package`,
+        },
+      );
 
+      const packageName = await driver.getCurrentPackage();
       if (packageName !== APP_PACKAGE) {
         throw new Error(`Expected ${APP_PACKAGE}, received ${packageName}`);
       }
@@ -59,25 +117,17 @@ const loginTests = [
   },
 
   {
-    name: 'shows the login screen after splash',
+    name: 'routes unauthenticated users from splash to login',
     fn: async (driver, helpers) => {
       const { waitForDisplayed, byAccessibilityId } = helpers;
 
+      await clearAppData(driver);
+      await waitForUnauthenticatedLogin(driver, helpers);
       await switchToOtpMode(driver, helpers);
 
       await waitForDisplayed(
         driver,
-        byAccessibilityId('login-Phone-input'),
-      );
-
-      await waitForDisplayed(
-        driver,
         byAccessibilityId('login-Send-OTP'),
-      );
-
-      await waitForDisplayed(
-        driver,
-        byAccessibilityId('login-mode-password'),
       );
     },
   },
@@ -87,6 +137,7 @@ const loginTests = [
     fn: async (driver, helpers) => {
       const { waitForDisplayed, byAccessibilityId, byText } = helpers;
 
+      await waitForUnauthenticatedLogin(driver, helpers);
       await switchToOtpMode(driver, helpers);
 
       const sendOtpButton = await waitForDisplayed(
@@ -108,6 +159,7 @@ const loginTests = [
     fn: async (driver, helpers) => {
       const { waitForDisplayed, byAccessibilityId, byText } = helpers;
 
+      await waitForUnauthenticatedLogin(driver, helpers);
       await switchToPasswordMode(driver, helpers);
 
       await waitForDisplayed(
@@ -135,10 +187,11 @@ const loginTests = [
   },
 
   {
-    name: 'login with phone and otp',
+    name: 'logs in with phone and otp',
     fn: async (driver, helpers) => {
       const { waitForDisplayed, byAccessibilityId } = helpers;
 
+      await waitForUnauthenticatedLogin(driver, helpers);
       await switchToOtpMode(driver, helpers);
 
       const phoneInput = await waitForDisplayed(
