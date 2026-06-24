@@ -1,12 +1,23 @@
 import React, { useRef, useState } from "react";
-import { View, TextInput, StyleSheet } from "react-native";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  NativeSyntheticEvent,
+  TextInputKeyPressEventData,
+} from "react-native";
 
-const OtpInput = ({ onChangeOTP }) => {
-  const inputRefs = useRef([]);
+type OtpInputProps = {
+  onChangeOTP: (code: string) => void;
+  testIDPrefix?: string;
+};
+
+const OtpInput = ({ onChangeOTP, testIDPrefix = "otp-input" }: OtpInputProps) => {
+  const inputRefs = useRef<Array<TextInput | null>>([]);
   const [otp, setOtp] = useState(["", "", "", "", ""]);
 
-  const handleChange = (text, index) => {
-    let newOtp = [...otp];
+  const handleChange = (text: string, index: number) => {
+    const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
 
@@ -15,13 +26,16 @@ const OtpInput = ({ onChangeOTP }) => {
 
     // Auto move to next input
     if (text && index < 4) {
-      inputRefs.current[index + 1].focus();
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyPress = ({ nativeEvent }, index) => {
+  const handleKeyPress = (
+    { nativeEvent }: NativeSyntheticEvent<TextInputKeyPressEventData>,
+    index: number,
+  ) => {
     if (nativeEvent.key === "Backspace" && otp[index] === "" && index > 0) {
-      inputRefs.current[index - 1].focus();
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -30,7 +44,11 @@ const OtpInput = ({ onChangeOTP }) => {
       {otp.map((value, index) => (
         <TextInput
           key={index}
-          ref={(ref) => (inputRefs.current[index] = ref)}
+          testID={`${testIDPrefix}-${index}`}
+          accessibilityLabel={`${testIDPrefix}-${index}`}
+          ref={(ref) => {
+            inputRefs.current[index] = ref;
+          }}
           style={styles.input}
           maxLength={1}
           keyboardType="number-pad"

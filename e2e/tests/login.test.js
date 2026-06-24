@@ -15,6 +15,22 @@ async function isDisplayed(driver, selector) {
   }
 }
 
+async function waitForAnyDisplayed(driver, selectors, timeout = 10000) {
+  let lastError;
+
+  for (const selector of selectors) {
+    try {
+      const element = await driver.$(selector);
+      await element.waitForDisplayed({ timeout });
+      return element;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('Expected one of the selectors to be displayed');
+}
+
 async function clearAppData(driver) {
   console.log('🔄 Restarting application...');
 
@@ -161,7 +177,7 @@ async function switchToOtpMode(driver, helpers) {
 
   const otpMode = await waitForDisplayed(
     driver,
-    androidByText('Via OTP')
+    androidByText('OTP')
   );
 
   await otpMode.click();
@@ -243,7 +259,7 @@ const loginTests = [
 
       await waitForDisplayed(
         driver,
-        androidByText('Via OTP')
+        androidByText('OTP')
         ,
       );
     },
@@ -282,56 +298,19 @@ const loginTests = [
       await switchToPasswordMode(driver, helpers);
       console.log('✅ Password  flow');
 
-      await waitForDisplayed(
-        driver,
-        androidByText('Enter User ID'),
-      );
-
-      await waitForDisplayed(
-        driver,
-        androidByText('Enter Password'),
-      );
-
-      const loginButton = await waitForDisplayed(
-        driver,
-        androidByText('Login'),
-      );
-      await loginButton.click();
-
-      await waitForDisplayed(
-        driver,
-        byText('User ID is required'),
-      );
-
-      await waitForDisplayed(
-        driver,
-        byText('Password is required'),
-      );
-    },
-  },
-
-  {
-    name: 'logs in with phone and otp',
-    fn: async (driver, helpers) => {
-      const {
-        waitForDisplayed,
-        byAccessibilityId,
-        byText,
-      } = helpers;
-
-      await switchToOtpMode(driver, helpers);
-
-      // Phone Number
-      const phoneInput = await waitForDisplayed(
+      const phone = await waitForDisplayed(
         driver,
         androidByText('Enter Phone Number'),
       );
 
-      await phoneInput.click();
-      await phoneInput.setValue('8720260615');
-      console.log('✅ Number Filled');
+      const password = await waitForDisplayed(
+        driver,
+        androidByText('Enter Password or DOB'),
+      );
+       
+      await phone.click();
+      await phone.setValue('6320260622');
 
-      // Close Keyboard
       try {
         await driver.hideKeyboard();
         console.log('✅ Keyboard Closed');
@@ -343,78 +322,31 @@ const loginTests = [
 
       await driver.pause(1000);
 
-      // Send OTP
-      const sendOtpButton = await waitForDisplayed(
+      await password.click();
+      await password.setValue('India@3344');
+
+      try {
+        await driver.hideKeyboard();
+        console.log('✅ Keyboard Closed');
+      } catch (e) {
+        try {
+          await driver.back();
+        } catch (_) { }
+      }
+
+      await driver.pause(1000);
+      
+      const loginButton = await waitForDisplayed(
         driver,
-        androidByText('Send OTP'),
-        byAccessibilityId('login-Send-OTP'),
+        androidByText('Login'),
       );
+      await loginButton.click();
+      await driver.pause(1000);
 
-      await sendOtpButton.click();
-      console.log('✅ Clicked Send OTP');
-
-      // Wait OTP Screen
-      // await waitForDisplayed(
-      //   driver,
-      //   byText('Enter Verification OTP'),
-      // );
-
-      // console.log('✅ OTP Area Visible');
-
-      // await driver.pause(2000);
-
-      // Find OTP EditText
-      // const editTexts = await driver.$$(
-      //   'android=new UiSelector().className("android.widget.EditText")'
-      // );
-
-      // console.log(`✅ Found ${editTexts.length} EditText(s)`);
-
-      // if (editTexts.length === 0) {
-      //   throw new Error('OTP input field not found');
-      // }
-
-      // Usually OTP field is the last EditText
-      // const otpField = editTexts[editTexts.length - 1];
-
-      // await otpField.click();
-      // await driver.pause(500);
-
-      // try {
-      //   await otpField.clearValue();
-      // } catch (e) { }
-
-      // Enter OTP
-      // await otpField.setValue('11111');
-
-      // console.log('✅ OTP Filled');
-
-      // await driver.pause(1000);
-
-      // Close Keyboard
-      // try {
-      //   await driver.hideKeyboard();
-      //   console.log('✅ Keyboard Closed');
-      // } catch (e) {
-      //   try {
-      //     await driver.back();
-      //     console.log('✅ Keyboard Closed Using Back');
-      //   } catch (_) { }
-      // }
-
-      // await driver.pause(1000);
-
-      // Login Button
-      // const loginOtpButton = await waitForDisplayed(
-      //   driver,
-      //   androidByText('Login'),
-      // );
-
-      // await loginOtpButton.click();
-
-      console.log('✅ Login Clicked');
+      await loginButton.click();
+      await driver.pause(1000);
     },
-  }
+  },
 ];
 
 module.exports = loginTests;

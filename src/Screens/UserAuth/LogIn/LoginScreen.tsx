@@ -49,7 +49,7 @@ const LoginScreen = () => {
     // =========================
     // OTP LOGIN
     // =========================
-    const [otp, setOtp] = useState(["", "", "", "", ""]);
+    const [otp, setOtp] = useState("");
     const [showOtpArea, setShowOtpArea] = useState(false);
     const [isNumberEditable, setIsNumberEditable] = useState(true);
     const [timer, setTimer] = useState(30);
@@ -201,7 +201,7 @@ const LoginScreen = () => {
     const handelEditNumber = () => {
         setIsNumberEditable(true);
         setShowOtpArea(false);
-        setOtp(["", "", "", "", ""]);
+        setOtp("");
         setTimer(30);
     };
 
@@ -407,6 +407,7 @@ const LoginScreen = () => {
                             </Text>
 
                             <OtpInput
+                                testIDPrefix="login-otp-input"
                                 onChangeOTP={(code) => setOtp(code)}
                             />
 
