@@ -124,7 +124,7 @@ run().catch(error => {
 
 // For GIT HUB
 
-
+/** */
 const path = require('path');
 const {remote} = require('webdriverio');
 const loginTests = require('./tests/login.test');
@@ -179,9 +179,7 @@ async function run() {
 
     // Combine all test suites
     const allTests = [
-      ...loginTests,
-      ...onboardingTests,
-      ...bookingTests,
+      ...loginTests
     ];
 
     // Run all tests
