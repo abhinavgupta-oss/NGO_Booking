@@ -126,11 +126,11 @@ run().catch(error => {
 
 /** */
 const path = require('path');
-const {remote} = require('webdriverio');
+const { remote } = require('webdriverio');
 const loginTests = require('./tests/login.test');
 const onboardingTests = require('./tests/onboarding.test');
 const bookingTests = require('./tests/booking.test');
-const {byAccessibilityId, byText, waitForDisplayed} = require('./helpers');
+const { byAccessibilityId, byText, waitForDisplayed } = require('./helpers');
 
 const appPath =
   process.env.APPIUM_APK_PATH ||
@@ -156,18 +156,26 @@ async function run() {
     capabilities: {
       platformName: 'Android',
       'appium:automationName': 'UiAutomator2',
-      'appium:deviceName': process.env.APPIUM_DEVICE_NAME || 'Android Emulator',
+
+      'appium:deviceName':
+        process.env.APPIUM_DEVICE_NAME || 'Android Emulator',
+
       'appium:app': appPath,
       'appium:appPackage': APP_PACKAGE,
-      'appium:appActivity': process.env.APPIUM_APP_ACTIVITY || '.MainActivity',
+      'appium:appActivity':
+        process.env.APPIUM_APP_ACTIVITY || '.MainActivity',
+
       'appium:appWaitPackage': APP_PACKAGE,
-      'appium:appWaitActivity': process.env.APPIUM_APP_WAIT_ACTIVITY || '.MainActivity',
+      'appium:appWaitActivity':
+        process.env.APPIUM_APP_WAIT_ACTIVITY || '.MainActivity',
+
       'appium:autoGrantPermissions': true,
-      // keep remote commands short so failing tests don't hang
-      'appium:newCommandTimeout': Number(process.env.APPIUM_NEW_COMMAND_TIMEOUT || 30),
-      // reduce Appium idle wait to make startup checks faster
-      'appium:waitForIdleTimeout': Number(process.env.APPIUM_WAIT_IDLE_TIMEOUT || 1000),
-    },
+      'appium:noReset': true,
+      'appium:ignoreHiddenApiPolicyError': true,
+
+      'appium:newCommandTimeout': 30,
+      'appium:waitForIdleTimeout': 1000,
+    }
   });
 
   try {
